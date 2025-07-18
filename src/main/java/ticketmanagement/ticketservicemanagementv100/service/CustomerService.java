@@ -3,6 +3,7 @@ package ticketmanagement.ticketservicemanagementv100.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ticketmanagement.ticketservicemanagementv100.dto.CustomerRegistrationDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Customer;
 import ticketmanagement.ticketservicemanagementv100.model.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
@@ -76,4 +77,19 @@ public class CustomerService {
         }
         customerRepository.deleteById(id);
     }
+
+    public Customer registerCustomerFromDTO(CustomerRegistrationDTO dto) {
+        if (dto.getUsername() == null || dto.getPassword() == null ||
+                dto.getUsername().isBlank() || dto.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Username and password must not be blank.");
+        }
+
+        Customer customer = new Customer();
+        customer.setUsername(dto.getUsername());
+        customer.setPassword(dto.getPassword()); // ❗ plain text for now
+        customer.setRole(UserRole.CUSTOMER);
+
+        return customerRepository.save(customer);
+    }
+
 }

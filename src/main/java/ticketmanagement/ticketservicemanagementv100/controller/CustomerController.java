@@ -1,6 +1,7 @@
 package ticketmanagement.ticketservicemanagementv100.controller;
 
 import ticketmanagement.ticketservicemanagementv100.dto.CustomerRegistrationDTO;
+import ticketmanagement.ticketservicemanagementv100.dto.CustomerResponseDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Customer;
 import ticketmanagement.ticketservicemanagementv100.model.UserRole;
 import ticketmanagement.ticketservicemanagementv100.service.CustomerService;
@@ -18,15 +19,10 @@ public class CustomerController {
     private final CustomerService customerService;
 
     @PostMapping
-    public ResponseEntity<Customer> createCustomer(@RequestBody CustomerRegistrationDTO registrationDTO) {
-        if (registrationDTO.getUsername() == null || registrationDTO.getPassword() == null || registrationDTO.getUsername().trim().isEmpty() || registrationDTO.getPassword().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(null); // Basic validation
-        }
-        Customer customer = new Customer();
-        customer.setUsername(registrationDTO.getUsername());
-        customer.setPassword(registrationDTO.getPassword());
-        customer.setRole(UserRole.CUSTOMER);
-        return ResponseEntity.ok(customerService.createCustomer(customer));
+    public ResponseEntity<CustomerResponseDTO> createCustomer(@RequestBody CustomerRegistrationDTO registrationDTO) {
+        Customer savedCustomer = customerService.registerCustomerFromDTO(registrationDTO);
+        CustomerResponseDTO customerResponseDTO = new CustomerResponseDTO(savedCustomer.getId(), savedCustomer.getUsername());
+        return ResponseEntity.ok(customerResponseDTO);
     }
 
     @PutMapping("/{id}")
