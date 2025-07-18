@@ -25,6 +25,7 @@ distributionUrl=https://repo.maven.apache.org/maven2/org/apache/maven/apache-mav
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\TicketServiceManagementV100Application.java ---
 package ticketmanagement.ticketservicemanagementv100;
 
+import org.springframework.beans.factory.annotation.Value;
 import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 import ticketmanagement.ticketservicemanagementv100.model.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
@@ -49,21 +50,18 @@ public class TicketServiceManagementV100Application {
      * @return A CommandLineRunner bean.
      */
     @Bean
-    public CommandLineRunner createDefaultEngineer(EngineerRepository engineerRepository) {
+    public CommandLineRunner createDefaultEngineer(EngineerRepository engineerRepository, @Value("${app.default.engineer.username}")  String defaultUsername, @Value("${app.default.engineer.password}")  String defaultPassword) {
         return args -> {
-            final String defaultEngineerUsername = "default_engineer";
-            final String defaultEngineerPassword = "password";
-
             // Check if the default engineer already exists
-            if (engineerRepository.findByUsername(defaultEngineerUsername).isEmpty()) {
+            if (engineerRepository.findByUsername(defaultUsername).isEmpty()) {
                 Engineer defaultEngineer = new Engineer();
-                defaultEngineer.setUsername(defaultEngineerUsername);
-                defaultEngineer.setPassword(defaultEngineerPassword); // Password is now plain text
+                defaultEngineer.setUsername(defaultUsername);
+                defaultEngineer.setPassword(defaultPassword); // Password is now plain text
                 defaultEngineer.setRole(UserRole.ENGINEER);
                 engineerRepository.save(defaultEngineer);
-                System.out.println("Default engineer '" + defaultEngineerUsername + "' created successfully!");
+                System.out.println("Default engineer '" + defaultUsername + "' created successfully!");
             } else {
-                System.out.println("Default engineer '" + defaultEngineerUsername + "' already exists.");
+                System.out.println("Default engineer '" + defaultUsername + "' already exists.");
             }
         };
     }
@@ -110,7 +108,9 @@ public class CorsConfig {
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\CustomerController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
 
+import org.springframework.http.HttpStatus;
 import ticketmanagement.ticketservicemanagementv100.dto.CustomerRegistrationDTO;
+import ticketmanagement.ticketservicemanagementv100.dto.CustomerResponseDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Customer;
 import ticketmanagement.ticketservicemanagementv100.model.UserRole;
 import ticketmanagement.ticketservicemanagementv100.service.CustomerService;
@@ -128,15 +128,10 @@ public class CustomerController {
     private final CustomerService customerService;
 
     @PostMapping
-    public ResponseEntity<Customer> createCustomer(@RequestBody CustomerRegistrationDTO registrationDTO) {
-        if (registrationDTO.getUsername() == null || registrationDTO.getPassword() == null || registrationDTO.getUsername().trim().isEmpty() || registrationDTO.getPassword().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(null); // Basic validation
-        }
-        Customer customer = new Customer();
-        customer.setUsername(registrationDTO.getUsername());
-        customer.setPassword(registrationDTO.getPassword());
-        customer.setRole(UserRole.CUSTOMER);
-        return ResponseEntity.ok(customerService.createCustomer(customer));
+    public ResponseEntity<CustomerResponseDTO> createCustomer(@RequestBody CustomerRegistrationDTO registrationDTO) {
+        Customer savedCustomer = customerService.registerCustomerFromDTO(registrationDTO);
+        CustomerResponseDTO customerResponseDTO = new CustomerResponseDTO(savedCustomer.getId(), savedCustomer.getUsername());
+        return ResponseEntity.ok(customerResponseDTO);
     }
 
     @PutMapping("/{id}")
@@ -160,12 +155,25 @@ public class CustomerController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id,
+                                               @RequestHeader("X-User-Role") String role) { // Add role for restriction
+        // Role restriction: Only ENGINEER role can delete
+        if (!"ENGINEER".equalsIgnoreCase(role)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        customerService.deleteCustomer(id); // This calls the method you already have in CustomerService
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
 }
 
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\EngineerController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
 
+import org.springframework.http.HttpStatus;
+import ticketmanagement.ticketservicemanagementv100.dto.EngineerRegistrationDTO;
+import ticketmanagement.ticketservicemanagementv100.dto.EngineerResponseDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 import ticketmanagement.ticketservicemanagementv100.service.EngineerService;
 import jakarta.persistence.EntityNotFoundException;
@@ -183,18 +191,22 @@ public class EngineerController {
     private final EngineerService engineerService;
 
     @PostMapping
-    public ResponseEntity<Engineer> createEngineer(@RequestBody Engineer engineer) {
-        Engineer saved = engineerService.createEngineer(engineer);
-        return ResponseEntity.ok(saved);
+    public ResponseEntity<EngineerResponseDTO> createEngineer(@RequestBody EngineerRegistrationDTO dto,
+                                                              @RequestHeader("X-User-Role") String role) {
+        if (!"ENGINEER".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403 Forbidden
+        }
+        EngineerResponseDTO saved = engineerService.createEngineer(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @GetMapping
-    public ResponseEntity<List<Engineer>> getAllEngineers() {
+    public ResponseEntity<List<EngineerResponseDTO>> getAllEngineers() {
         return ResponseEntity.ok(engineerService.getAllEngineers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Engineer> getEngineerById(@PathVariable Long id) {
+    public ResponseEntity<EngineerResponseDTO> getEngineerById(@PathVariable Long id) {
         return engineerService.getEngineerById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
@@ -211,13 +223,14 @@ public class EngineerController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEngineer(@PathVariable Long id) {
-        try {
-            engineerService.deleteEngineer(id);
-            return ResponseEntity.ok().build();
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteEngineer(@PathVariable Long id,
+                                               @RequestHeader("X-User-Role") String role) { // Add this parameter
+        // Add role restriction check
+        if (!"ENGINEER".equalsIgnoreCase(role)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+        engineerService.deleteEngineer(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
 
@@ -242,16 +255,15 @@ public class HomeController {
 package ticketmanagement.ticketservicemanagementv100.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ticketmanagement.ticketservicemanagementv100.dto.LoginRequest;
+import ticketmanagement.ticketservicemanagementv100.dto.LoginResponseDTO;
 import ticketmanagement.ticketservicemanagementv100.model.User;
 import ticketmanagement.ticketservicemanagementv100.service.LoginService;
 
-import java.util.Collections;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/login")
@@ -261,23 +273,40 @@ public class LoginController {
     private final LoginService loginService;
 
     @PostMapping
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        User user = loginService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequest loginRequest) {
+        Optional<User> optionalUser = loginService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
 
-        if (user != null) {
-            return ResponseEntity.ok(Collections.singletonMap("message", "Login successful for " + user.getUsername() + " with role " + user.getRole()));
-        } else {
-            return ResponseEntity.status(401).body(Collections.singletonMap("error", "Invalid username or password"));
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            LoginResponseDTO response = new LoginResponseDTO(
+                    user.getUsername(),
+                    user.getRole().name(),
+                    "Login successful"
+            );
+            return ResponseEntity.ok(response);
         }
+
+        // If authentication fails
+        LoginResponseDTO errorResponse = new LoginResponseDTO(
+                loginRequest.getUsername(),
+                "UNKNOWN",
+                "Invalid username or password"
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 }
-
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\TicketController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
 
 import ticketmanagement.ticketservicemanagementv100.dto.TicketCreationDTO;
+import ticketmanagement.ticketservicemanagementv100.dto.TicketUpdateDTO;
+import ticketmanagement.ticketservicemanagementv100.model.Customer;
+import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 import ticketmanagement.ticketservicemanagementv100.model.Ticket;
+import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
+import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
+import ticketmanagement.ticketservicemanagementv100.repository.TicketRepository;
 import ticketmanagement.ticketservicemanagementv100.service.TicketService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -298,7 +327,9 @@ import java.util.List;
 public class TicketController {
 
     private final TicketService ticketService; // Inject the service
-
+    private final CustomerRepository customerRepo;
+    private final EngineerRepository  engineerRepo;
+    private final TicketRepository ticketRepo;
     /**
      * Creates a new Ticket using a TicketCreationDTO.
      * This endpoint expects a DTO containing the ticket description,
@@ -308,25 +339,29 @@ public class TicketController {
      * @return ResponseEntity containing the created Ticket and HTTP status 201 (Created).
      */
     @PostMapping
-    public ResponseEntity<Ticket> createTicket(@RequestBody TicketCreationDTO ticketDto) {
-        // Validate input from DTO
-        if (ticketDto.getDescription() == null || ticketDto.getDescription().trim().isEmpty() || ticketDto.getCustomerId() == null) {
-            return ResponseEntity.badRequest().body(null); // Return 400 if description or customerId is missing
+    public ResponseEntity<Ticket> createTicket(@RequestBody TicketCreationDTO ticketDto,
+                                               @RequestHeader("X-Username") String username,
+                                               @RequestHeader("X-User-Role") String role) {
+        if (!"CUSTOMER".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        try {
-            // Call the service method with the provided customerId, description, and optional engineerId
-            Ticket savedTicket = ticketService.createTicket(
-                    ticketDto.getCustomerId(), // Now directly from DTO
-                    ticketDto.getDescription(),
-                    ticketDto.getEngineerId() // Pass the optional engineerId
-            );
-            return new ResponseEntity<>(savedTicket, HttpStatus.CREATED); // Return 201 Created with the new ticket
-        } catch (EntityNotFoundException e) {
-            // If the customer or engineer (if provided) is not found, return 400 Bad Request
+        if (ticketDto.getDescription() == null || ticketDto.getDescription().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(null);
         }
+
+        Customer customer = customerRepo.findByUsername(username)
+                .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+
+        Ticket savedTicket = ticketService.createTicket(
+                customer.getId(),
+                ticketDto.getDescription(),
+                ticketDto.getEngineerId()
+        );
+
+        return new ResponseEntity<>(savedTicket, HttpStatus.CREATED);
     }
+
 
     /**
      * Retrieves all Tickets.
@@ -357,19 +392,37 @@ public class TicketController {
      * Updates an existing Ticket.
      *
      * @param id    The ID of the ticket to update.
-     * @param input The Ticket object with updated details.
+     * @param dto The Ticket object with updated details.
      * @return ResponseEntity containing the updated Ticket (HTTP 200 OK),
      * or HTTP status 404 (Not Found) if the ticket does not exist.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Ticket> updateTicket(@PathVariable Long id, @RequestBody Ticket input) {
+    public ResponseEntity<Ticket> updateTicket(@PathVariable Long id,
+                                               @RequestBody TicketUpdateDTO dto) {
         try {
-            Ticket updatedTicket = ticketService.updateTicket(id, input);
-            return ResponseEntity.ok(updatedTicket);
+            Ticket ticket = ticketService.getTicketById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
+
+            if (dto.getEngineerId() != null) {
+                Engineer engineer = engineerRepo.findById(dto.getEngineerId())
+                        .orElseThrow(() -> new EntityNotFoundException("Engineer not found"));
+                ticket.setAcknowledgedBy(engineer);
+            }
+
+            ticket.setDescription(dto.getDescription());
+            ticket.setStatus(dto.getStatus());
+            ticket.setTentativeResolutionDate(dto.getTentativeResolutionDate());
+            ticket.setCustomerCommentOnTicket(dto.getCustomerCommentOnTicket());
+            ticket.setEngineerCommentOnTicket(dto.getEngineerCommentOnTicket());
+
+            Ticket updated = ticketRepo.save(ticket);
+            return ResponseEntity.ok(updated);
+
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
+
 
     /**
      * Deletes a Ticket by its ID.
@@ -379,13 +432,14 @@ public class TicketController {
      * or HTTP status 404 (Not Found) if the ticket does not exist.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTicket(@PathVariable Long id) {
-        try {
-            ticketService.deleteTicket(id);
-            return ResponseEntity.ok().build();
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteTicket(@PathVariable Long id,
+                                             @RequestHeader("X-User-Role") String role) { // Add this parameter
+        // Add role restriction check
+        if (!"ENGINEER".equalsIgnoreCase(role)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+        ticketService.deleteTicket(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**
@@ -432,6 +486,57 @@ public class CustomerRegistrationDTO{
 }
 
 
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\CustomerResponseDTO.java ---
+package ticketmanagement.ticketservicemanagementv100.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class CustomerResponseDTO {
+    private Long id;
+    private String username;
+}
+
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\EngineerRegistrationDTO.java ---
+package ticketmanagement.ticketservicemanagementv100.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * DTO for creating a new Engineer.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class EngineerRegistrationDTO {
+    private String username;
+    private String password;
+}
+
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\EngineerResponseDTO.java ---
+package ticketmanagement.ticketservicemanagementv100.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class EngineerResponseDTO {
+    private Long id;
+    private String username;
+}
+
+
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\LoginRequest.java ---
 package ticketmanagement.ticketservicemanagementv100.dto;
 
@@ -450,6 +555,28 @@ import lombok.Setter;
 public class LoginRequest {
     private String username;
     private String password;
+}
+
+
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\LoginResponseDTO.java ---
+package ticketmanagement.ticketservicemanagementv100.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * DTO for login responses.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class LoginResponseDTO {
+    private String username;
+    private String role;
+    private String message;
 }
 
 
@@ -472,8 +599,32 @@ import lombok.Setter;
 @AllArgsConstructor
 public class TicketCreationDTO {
     private String description;
-    private Long customerId; // Uncommented to allow direct passing of customerId
+   // private Long customerId; // Uncommented to allow direct passing of customerId
     private Long engineerId;
+}
+
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\TicketUpdateDTO.java ---
+package ticketmanagement.ticketservicemanagementv100.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import ticketmanagement.ticketservicemanagementv100.model.TicketStatus;
+
+import java.time.LocalDate;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class TicketUpdateDTO {
+    private String description;
+    private TicketStatus status;
+    private String customerCommentOnTicket;
+    private String engineerCommentOnTicket;
+    private LocalDate tentativeResolutionDate;
+    private Long engineerId; // Optional reassignment
 }
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\Customer.java ---
@@ -481,6 +632,7 @@ package ticketmanagement.ticketservicemanagementv100.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -490,6 +642,7 @@ import lombok.Setter;
 @Setter
 @Table(name = "customers")
 @NoArgsConstructor
+
 public class Customer extends User {
 }
 
@@ -499,9 +652,15 @@ package ticketmanagement.ticketservicemanagementv100.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 
+
+@Getter
+@Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "engineers")
@@ -518,10 +677,10 @@ public class Engineer extends User {
 package ticketmanagement.ticketservicemanagementv100.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 @Entity
@@ -530,18 +689,33 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Ticket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String description;
+    private LocalDateTime ticketCreateDate;
+    private String customerCommentOnTicket;
+    private String engineerCommentOnTicket;
+    private LocalDate tentativeResolutionDate;
 
     @Enumerated(EnumType.STRING)
     private TicketStatus status = TicketStatus.CREATED;
-    @ManyToOne
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "customer_id", nullable = false)
     private Customer createdBy;
-    @ManyToOne
+
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "engineer_id")
     private Engineer acknowledgedBy;
+
+    @PrePersist
+    public void prePersist() {
+        this.ticketCreateDate = LocalDateTime.now();
+    }
 
 }
 
@@ -591,6 +765,8 @@ public abstract class User {
         this.username = username;
         this.password = password;
     }
+
+
 }
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\UserRole.java ---
@@ -614,7 +790,6 @@ import ticketmanagement.ticketservicemanagementv100.model.Customer;
 
 import java.util.Optional;
 
-@Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByUsername(String username);
 }
@@ -628,7 +803,6 @@ import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 
 import java.util.Optional;
 
-@Repository
 public interface EngineerRepository extends JpaRepository<Engineer, Long> {
     Optional<Engineer> findByUsername(String username); // New method for finding engineer by username
 }
@@ -641,10 +815,19 @@ package ticketmanagement.ticketservicemanagementv100.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import ticketmanagement.ticketservicemanagementv100.model.Ticket;
+import ticketmanagement.ticketservicemanagementv100.model.TicketStatus;
+
+import java.util.List;
 
 
-@Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
+    // TicketRepository.java
+    List<Ticket> findByCreatedById(Long customerId);
+
+    List<Ticket> findByAcknowledgedById(Long engineerId);
+
+    List<Ticket> findByStatus(TicketStatus status);
+
 }
 
 
@@ -654,6 +837,7 @@ package ticketmanagement.ticketservicemanagementv100.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ticketmanagement.ticketservicemanagementv100.dto.CustomerRegistrationDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Customer;
 import ticketmanagement.ticketservicemanagementv100.model.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
@@ -727,6 +911,23 @@ public class CustomerService {
         }
         customerRepository.deleteById(id);
     }
+    /*public void deleteCustomer(Long id) {
+        customerRepository.deleteById(id);
+    }*/
+    public Customer registerCustomerFromDTO(CustomerRegistrationDTO dto) {
+        if (dto.getUsername() == null || dto.getPassword() == null ||
+                dto.getUsername().isBlank() || dto.getPassword().isBlank()) {
+            throw new IllegalArgumentException("Username and password must not be blank.");
+        }
+
+        Customer customer = new Customer();
+        customer.setUsername(dto.getUsername());
+        customer.setPassword(dto.getPassword()); // ❗ plain text for now
+        customer.setRole(UserRole.CUSTOMER);
+
+        return customerRepository.save(customer);
+    }
+
 }
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\EngineerService.java ---
@@ -735,12 +936,15 @@ package ticketmanagement.ticketservicemanagementv100.service;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ticketmanagement.ticketservicemanagementv100.dto.EngineerRegistrationDTO;
+import ticketmanagement.ticketservicemanagementv100.dto.EngineerResponseDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 import ticketmanagement.ticketservicemanagementv100.model.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -748,60 +952,37 @@ public class EngineerService {
 
     private final EngineerRepository engineerRepository;
 
-    /**
-     * Creates a new Engineer.
-     *
-     * @param engineer The Engineer object to be saved.
-     * @return The saved Engineer object.
-     */
-    public Engineer createEngineer(Engineer engineer) {
+    public EngineerResponseDTO createEngineer(EngineerRegistrationDTO dto) {
+        Engineer engineer = new Engineer();
+        engineer.setUsername(dto.getUsername());
+        engineer.setPassword(dto.getPassword()); // TODO: hash password later
         engineer.setRole(UserRole.ENGINEER);
-        return engineerRepository.save(engineer);
+        Engineer saved = engineerRepository.save(engineer);
+        return new EngineerResponseDTO(saved.getId(), saved.getUsername());
     }
 
-    /**
-     * Retrieves all Engineers.
-     *
-     * @return A list of all Engineer objects.
-     */
-    public List<Engineer> getAllEngineers() {
-        return engineerRepository.findAll();
+    public List<EngineerResponseDTO> getAllEngineers() {
+        return engineerRepository.findAll()
+                .stream()
+                .map(e -> new EngineerResponseDTO(e.getId(), e.getUsername()))
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Retrieves an Engineer by their ID.
-     *
-     * @param id The ID of the engineer to retrieve.
-     * @return An Optional containing the Engineer if found, or empty if not.
-     */
-    public Optional<Engineer> getEngineerById(Long id) {
-        return engineerRepository.findById(id);
+    public Optional<EngineerResponseDTO> getEngineerById(Long id) {
+        return engineerRepository.findById(id)
+                .map(e -> new EngineerResponseDTO(e.getId(), e.getUsername()));
     }
 
-    /**
-     * Updates an existing Engineer.
-     *
-     * @param id The ID of the engineer to update.
-     * @param engineerDetails The Engineer object containing updated details.
-     * @return The updated Engineer object.
-     * @throws EntityNotFoundException if no engineer with the given ID is found.
-     */
-    public Engineer updateEngineer(Long id, Engineer engineerDetails) {
+    public Engineer updateEngineer(Long id, Engineer input) {
         return engineerRepository.findById(id)
                 .map(engineer -> {
-                    engineer.setUsername(engineerDetails.getUsername());
-                    engineer.setPassword(engineerDetails.getPassword());
+                    engineer.setUsername(input.getUsername());
+                    engineer.setPassword(input.getPassword()); // TODO: hash password later
                     return engineerRepository.save(engineer);
                 })
                 .orElseThrow(() -> new EntityNotFoundException("Engineer not found with id " + id));
     }
 
-    /**
-     * Deletes an Engineer by their ID.
-     *
-     * @param id The ID of the engineer to delete.
-     * @throws EntityNotFoundException if no engineer with the given ID is found.
-     */
     public void deleteEngineer(Long id) {
         if (!engineerRepository.existsById(id)) {
             throw new EntityNotFoundException("Engineer not found with id " + id);
@@ -810,16 +991,17 @@ public class EngineerService {
     }
 }
 
+
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\LoginService.java ---
 package ticketmanagement.ticketservicemanagementv100.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ticketmanagement.ticketservicemanagementv100.model.Customer;
-import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 import ticketmanagement.ticketservicemanagementv100.model.User;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -828,23 +1010,22 @@ public class LoginService {
     private final CustomerRepository customerRepository;
     private final EngineerRepository engineerRepository;
 
-    public User authenticate(String username, String password) {
-        // Try to find as Customer
-        Customer customer = customerRepository.findByUsername(username).orElse(null);
-        if (customer != null && customer.getPassword().equals(password)) {
+    public Optional<User> authenticate(String username, String password) {
+        // First try to find in customers
+        Optional<User> customer = customerRepository.findByUsername(username)
+                .map(c -> (User) c)
+                .filter(user -> user.getPassword().equals(password));
+
+        if (customer.isPresent()) {
             return customer;
         }
 
-        // Try to find as Engineer
-        Engineer engineer = engineerRepository.findByUsername(username).orElse(null);
-        if (engineer != null && engineer.getPassword().equals(password)) {
-            return engineer;
-        }
-
-        return null; // Authentication failed
+        // If not found in customers, try engineers
+        return engineerRepository.findByUsername(username)
+                .map(e -> (User) e)
+                .filter(user -> user.getPassword().equals(password));
     }
 }
-
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\TicketService.java ---
 package ticketmanagement.ticketservicemanagementv100.service;
@@ -966,16 +1147,21 @@ public class TicketService {
     public Ticket updateTicket(Long id, Ticket ticketDetails) {
         return ticketRepo.findById(id)
                 .map(ticket -> {
-                    // Update only the description and status from the provided details
                     ticket.setDescription(ticketDetails.getDescription());
                     ticket.setStatus(ticketDetails.getStatus());
-                    // You might want to allow updating acknowledgedBy as well,
-                    // depending on your business rules. For now, it's commented out.
-                    // ticket.setAcknowledgedBy(ticketDetails.getAcknowledgedBy());
-                    return ticketRepo.save(ticket); // Save the updated ticket
+                    ticket.setTentativeResolutionDate(ticketDetails.getTentativeResolutionDate());
+                    ticket.setCustomerCommentOnTicket(ticketDetails.getCustomerCommentOnTicket());
+                    ticket.setEngineerCommentOnTicket(ticketDetails.getEngineerCommentOnTicket());
+
+                    if (ticketDetails.getAcknowledgedBy() != null) {
+                        ticket.setAcknowledgedBy(ticketDetails.getAcknowledgedBy());
+                    }
+
+                    return ticketRepo.save(ticket);
                 })
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id " + id));
     }
+
 
     /**
      * Deletes a ticket by its ID.
@@ -992,6 +1178,70 @@ public class TicketService {
     }
 }
 
+
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\UserService.java ---
+package ticketmanagement.ticketservicemanagementv100.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ticketmanagement.ticketservicemanagementv100.model.User;
+import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
+import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class UserService {
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private EngineerRepository engineerRepository;
+
+    public List<User> getAllUsers() {
+        List<User> allUsers = new ArrayList<>();
+        allUsers.addAll(customerRepository.findAll());
+        allUsers.addAll(engineerRepository.findAll());
+        return allUsers;
+    }
+
+    public Optional<User> getUserById(Long id) {
+        // Try to find in customers first
+        Optional<User> customer = customerRepository.findById(id).map(c -> (User) c);
+        if (customer.isPresent()) {
+            return customer;
+        }
+
+        // If not found in customers, try engineers
+        return engineerRepository.findById(id).map(e -> (User) e);
+    }
+
+    // Note: createUser method removed as you should use CustomerService or EngineerService
+    // to create specific user types with proper roles
+
+    // Note: updateUser method removed as you should use CustomerService or EngineerService
+    // to update specific user types
+
+    // Note: deleteUser method removed as you should use CustomerService or EngineerService
+    // to delete specific user types
+
+    public Optional<User> findByUsername(String username) {
+        // First try to find in customers
+        Optional<User> customer = customerRepository.findByUsername(username)
+                .map(c -> (User) c);
+
+        if (customer.isPresent()) {
+            return customer;
+        }
+
+        // If not found in customers, try engineers
+        return engineerRepository.findByUsername(username)
+                .map(e -> (User) e);
+    }
+}
 
 --- File: src\main\resources\application.properties ---
 spring.application.name=TicketServiceManagementV100
@@ -1024,6 +1274,9 @@ spring.web.cors.allowed-origins=*
 spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
 spring.web.cors.allowed-headers=*
 
+# Username & Password
+app.default.engineer.username=default_engineer
+app.default.engineer.password=password
 
 --- File: src\test\java\ticketmanagement\ticketservicemanagementv100\TicketServiceManagementV100ApplicationTests.java ---
 package ticketmanagement.ticketservicemanagementv100;
@@ -1071,3 +1324,7 @@ logging.level.org.hibernate.SQL=INFO
 spring.web.cors.allowed-origins=*
 spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
 spring.web.cors.allowed-headers=*
+
+# Username & Password
+app.default.engineer.username=default_engineer
+app.default.engineer.password=password

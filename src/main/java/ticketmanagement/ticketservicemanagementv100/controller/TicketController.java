@@ -133,13 +133,14 @@ public class TicketController {
      * or HTTP status 404 (Not Found) if the ticket does not exist.
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTicket(@PathVariable Long id) {
-        try {
-            ticketService.deleteTicket(id);
-            return ResponseEntity.ok().build();
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteTicket(@PathVariable Long id,
+                                             @RequestHeader("X-User-Role") String role) { // Add this parameter
+        // Add role restriction check
+        if (!"ENGINEER".equalsIgnoreCase(role)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+        ticketService.deleteTicket(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
     /**

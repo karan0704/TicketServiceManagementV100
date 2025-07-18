@@ -77,7 +77,9 @@ public class CustomerService {
         }
         customerRepository.deleteById(id);
     }
-
+    /*public void deleteCustomer(Long id) {
+        customerRepository.deleteById(id);
+    }*/
     public Customer registerCustomerFromDTO(CustomerRegistrationDTO dto) {
         if (dto.getUsername() == null || dto.getPassword() == null ||
                 dto.getUsername().isBlank() || dto.getPassword().isBlank()) {

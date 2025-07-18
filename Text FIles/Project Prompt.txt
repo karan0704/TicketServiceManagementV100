@@ -176,6 +176,7 @@ Notifications: Add a notification system (e.g., email, in-app alerts) for status
 
 File Attachments: Allow users to attach files (e.g., screenshots, logs) to tickets. This would require integrating with an object storage service (like AWS S3 or Google Cloud Storage) or a local file system.
 
+
 Audit Logging: Implement comprehensive logging of all actions performed by users and engineers for auditing and debugging purposes.
 
 User Interface Refinements:
@@ -189,7 +190,6 @@ Improve date/time pickers for tentativeResolutionDate.
 Admin Dashboard: Create a dedicated dashboard for administrators with analytics, user activity logs, and system configuration options.
 
 These suggestions aim to improve the system's security, scalability, user experience, and overall functionality.
-
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 for this project i want to create entity class
@@ -200,5 +200,29 @@ so just write should i do how could i do this and what things should i look
 
 A Ticket is created by one Customer (many tickets to one customer).
 A Ticket is assigned to one Engineer (optional at first, many tickets to one engineer).
-how can i Define Relationships by which annotaion
+how can i Define Relationships by which annotation
+
+write a frontend having round effects hover dynamic light color theme with fonts icon
+
+header like a real webpage
+add some other light colors
+
+header should be fix
+
+write a frontend having round effects hover dynamic light color theme with fonts icon
+
+1. Logged in as: () this shouldn't be seen on login page
+
+2. Created tickets r not showing up in tickets
+
+3.
+
+header like a real webpage
+
+make it more dynamic
+
+ticket list should look good
+
+add fonts
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
 

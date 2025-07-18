@@ -52,12 +52,13 @@ public class EngineerController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEngineer(@PathVariable Long id) {
-        try {
-            engineerService.deleteEngineer(id);
-            return ResponseEntity.ok().build();
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> deleteEngineer(@PathVariable Long id,
+                                               @RequestHeader("X-User-Role") String role) { // Add this parameter
+        // Add role restriction check
+        if (!"ENGINEER".equalsIgnoreCase(role)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
+        engineerService.deleteEngineer(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

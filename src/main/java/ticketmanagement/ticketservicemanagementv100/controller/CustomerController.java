@@ -1,5 +1,6 @@
 package ticketmanagement.ticketservicemanagementv100.controller;
 
+import org.springframework.http.HttpStatus;
 import ticketmanagement.ticketservicemanagementv100.dto.CustomerRegistrationDTO;
 import ticketmanagement.ticketservicemanagementv100.dto.CustomerResponseDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Customer;
@@ -45,5 +46,15 @@ public class CustomerController {
         return customerService.getCustomerById((id))
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id,
+                                               @RequestHeader("X-User-Role") String role) { // Add role for restriction
+        // Role restriction: Only ENGINEER role can delete
+        if (!"ENGINEER".equalsIgnoreCase(role)) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        customerService.deleteCustomer(id); // This calls the method you already have in CustomerService
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }

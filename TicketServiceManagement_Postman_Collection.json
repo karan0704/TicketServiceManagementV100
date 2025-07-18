@@ -1,0 +1,496 @@
+{
+    "info": {
+        "_postman_id": "YOUR_UNIQUE_COLLECTION_ID",
+        "name": "Ticket Service Management API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"default_engineer\",\n  \"password\": \"password\"\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:9090/login",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "login"
+                            ]
+                        },
+                        "description": "Authenticates a user (customer or engineer)."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Customers",
+            "item": [
+                {
+                    "name": "Create Customer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"test_customer\",\n  \"password\": \"customer_pass\"\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:9090/customers",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "customers"
+                            ]
+                        },
+                        "description": "Creates a new customer account."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Customers",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:9090/customers",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "customers"
+                            ]
+                        },
+                        "description": "Retrieves a list of all customers."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Customer by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:9090/customers/:id",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "customers",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID of the customer to retrieve"
+                                }
+                            ]
+                        },
+                        "description": "Retrieves a single customer by their ID."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Customer",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"updated_customer\",\n  \"password\": \"new_password\"\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:9090/customers/:id",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "customers",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID of the customer to update"
+                                }
+                            ]
+                        },
+                        "description": "Updates an existing customer's details."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Engineers",
+            "item": [
+                {
+                    "name": "Create Engineer",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-User-Role",
+                                "value": "ENGINEER"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"new_engineer\",\n  \"password\": \"engineer_pass\",\n  \"role\": \"ENGINEER\"\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:9090/engineers",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "engineers"
+                            ]
+                        },
+                        "description": "Creates a new engineer account. Requires X-User-Role header."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Engineers",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:9090/engineers",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "engineers"
+                            ]
+                        },
+                        "description": "Retrieves a list of all engineers."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Engineer by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:9090/engineers/:id",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "engineers",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID of the engineer to retrieve"
+                                }
+                            ]
+                        },
+                        "description": "Retrieves a single engineer by their ID."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Engineer",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"username\": \"updated_engineer\",\n  \"password\": \"new_engineer_pass\",\n  \"role\": \"ENGINEER\"\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:9090/engineers/:id",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "engineers",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID of the engineer to update"
+                                }
+                            ]
+                        },
+                        "description": "Updates an existing engineer's details."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Engineer",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:9090/engineers/:id",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "engineers",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID of the engineer to delete"
+                                }
+                            ]
+                        },
+                        "description": "Deletes an engineer by their ID."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Tickets",
+            "item": [
+                {
+                    "name": "Create Ticket",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Username",
+                                "value": "test_customer"
+                            },
+                            {
+                                "key": "X-User-Role",
+                                "value": "CUSTOMER"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"description\": \"My internet is not working.\",\n  \"engineerId\": null\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:9090/tickets",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "tickets"
+                            ]
+                        },
+                        "description": "Creates a new ticket. Requires X-Username and X-User-Role headers."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get All Tickets",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:9090/tickets",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "tickets"
+                            ]
+                        },
+                        "description": "Retrieves a list of all tickets."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Ticket by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:9090/tickets/:id",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "tickets",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID of the ticket to retrieve"
+                                }
+                            ]
+                        },
+                        "description": "Retrieves a single ticket by its ID."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Ticket",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"description\": \"Internet issue resolved.\",\n  \"status\": \"CLOSED\"\n}"
+                        },
+                        "url": {
+                            "raw": "http://localhost:9090/tickets/:id",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "tickets",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID of the ticket to update"
+                                }
+                            ]
+                        },
+                        "description": "Updates an existing ticket's details (description, status)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Acknowledge Ticket",
+                    "request": {
+                        "method": "PUT",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:9090/tickets/:ticketId/acknowledge/:engineerId",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "tickets",
+                                ":ticketId",
+                                "acknowledge",
+                                ":engineerId"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "ticketId",
+                                    "value": "1",
+                                    "description": "ID of the ticket to acknowledge"
+                                },
+                                {
+                                    "key": "engineerId",
+                                    "value": "1",
+                                    "description": "ID of the engineer acknowledging the ticket"
+                                }
+                            ]
+                        },
+                        "description": "Acknowledges a ticket by assigning an engineer and updating its status."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Ticket",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "http://localhost:9090/tickets/:id",
+                            "host": [
+                                "localhost:9090"
+                            ],
+                            "path": [
+                                "tickets",
+                                ":id"
+                            ],
+                            "variable": [
+                                {
+                                    "key": "id",
+                                    "value": "1",
+                                    "description": "ID of the ticket to delete"
+                                }
+                            ]
+                        },
+                        "description": "Deletes a ticket by its ID."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Home",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                    "raw": "http://localhost:9090/",
+                    "host": [
+                        "localhost:9090"
+                    ],
+                    "path": [
+                        ""
+                    ]
+                },
+                "description": "Accesses the home page."
+            },
+            "response": []
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:9090",
+            "type": "string"
+        }
+    ]
+}
