@@ -6,7 +6,6 @@ import ticketmanagement.ticketservicemanagementv100.model.User;
 
 import java.util.Optional;
 
-@Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
     // Custom method to find a User by username.
