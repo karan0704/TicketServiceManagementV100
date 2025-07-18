@@ -1,16 +1,15 @@
 package ticketmanagement.ticketservicemanagementv100.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ticketmanagement.ticketservicemanagementv100.dto.LoginRequest;
+import ticketmanagement.ticketservicemanagementv100.dto.LoginResponseDTO;
 import ticketmanagement.ticketservicemanagementv100.model.User;
 import ticketmanagement.ticketservicemanagementv100.service.LoginService;
 
-import java.util.Collections;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/login")
@@ -20,13 +19,25 @@ public class LoginController {
     private final LoginService loginService;
 
     @PostMapping
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
-        User user = loginService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequest loginRequest) {
+        Optional<User> optionalUser = loginService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
 
-        if (user != null) {
-            return ResponseEntity.ok(Collections.singletonMap("message", "Login successful for " + user.getUsername() + " with role " + user.getRole()));
-        } else {
-            return ResponseEntity.status(401).body(Collections.singletonMap("error", "Invalid username or password"));
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            LoginResponseDTO response = new LoginResponseDTO(
+                    user.getUsername(),
+                    user.getRole().name(),
+                    "Login successful"
+            );
+            return ResponseEntity.ok(response);
         }
+
+        // If authentication fails
+        LoginResponseDTO errorResponse = new LoginResponseDTO(
+                loginRequest.getUsername(),
+                "UNKNOWN",
+                "Invalid username or password"
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 }
