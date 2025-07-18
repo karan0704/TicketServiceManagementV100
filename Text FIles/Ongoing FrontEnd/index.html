@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket Management System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #333;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background-color: white;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background-color: #f8f9fa;
+            border-radius: 8px 8px 0 0;
+            transition: background-color 0.3s;
+        }
+
+        .nav-tab:hover {
+            background-color: #e9ecef;
+        }
+
+        .nav-tab.active {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .table th,
+        .table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        .table tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-created {
+            background-color: #ffc107;
+            color: #212529;
+        }
+
+        .status-acknowledged {
+            background-color: #17a2b8;
+            color: white;
+        }
+
+        .status-in_progress {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .status-closed {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .user-info {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Ticket Management System</h1>
+    </div>
+
+    <div class="container">
+        <!-- User Info -->
+        <div id="userInfo" class="user-info hidden">
+            <strong>Logged in as:</strong> <span id="currentUser"></span> 
+            (<span id="currentRole"></span>)
+            <button onclick="logout()" style="float: right;">Logout</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginSection">
+            <div class="tab-content active">
+                <h2>Login</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginUsername">Username:</label>
+                        <input type="text" id="loginUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password:</label>
+                        <input type="password" id="loginPassword" required>
+                    </div>
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Application -->
+        <div id="mainApp" class="hidden">
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="showTab('engineers')">Engineers</button>
+                <button class="nav-tab" onclick="showTab('customers')">Customers</button>
+                <button class="nav-tab" onclick="showTab('tickets')">Tickets</button>
+            </div>
+
+            <!-- Engineers Tab -->
+            <div id="engineers" class="tab-content active">
+                <h2>Engineers Management</h2>
+                <div class="two-column">
+                    <div>
+                        <h3>Create Engineer</h3>
+                        <form id="engineerForm">
+                            <div class="form-group">
+                                <label for="engineerUsername">Username:</label>
+                                <input type="text" id="engineerUsername" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="engineerPassword">Password:</label>
+                                <input type="password" id="engineerPassword" required>
+                            </div>
+                            <button type="submit">Create Engineer</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h3>Engineers List</h3>
+                        <button onclick="loadEngineers()">Refresh</button>
+                        <div id="engineersList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customers Tab -->
+            <div id="customers" class="tab-content">
+                <h2>Customers Management</h2>
+                <div class="two-column">
+                    <div>
+                        <h3>Create Customer</h3>
+                        <form id="customerForm">
+                            <div class="form-group">
+                                <label for="customerUsername">Username:</label>
+                                <input type="text" id="customerUsername" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="customerPassword">Password:</label>
+                                <input type="password" id="customerPassword" required>
+                            </div>
+                            <button type="submit">Create Customer</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h3>Customers List</h3>
+                        <button onclick="loadCustomers()">Refresh</button>
+                        <div id="customersList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tickets Tab -->
+            <div id="tickets" class="tab-content">
+                <h2>Tickets Management</h2>
+                <div class="two-column">
+                    <div>
+                        <h3>Create Ticket</h3>
+                        <form id="ticketForm">
+                            <div class="form-group">
+                                <label for="ticketDescription">Description:</label>
+                                <textarea id="ticketDescription" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="ticketCustomer">Customer:</label>
+                                <select id="ticketCustomer" required>
+                                    <option value="">Select Customer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="ticketEngineer">Engineer (Optional):</label>
+                                <select id="ticketEngineer">
+                                    <option value="">Select Engineer</option>
+                                </select>
+                            </div>
+                            <button type="submit">Create Ticket</button>
+                        </form>
+                    </div>
+                    <div>
+                        <h3>Tickets List</h3>
+                        <button onclick="loadTickets()">Refresh</button>
+                        <div id="ticketsList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let currentRole = null;
+        const API_BASE_URL = 'http://localhost:9090';
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Login form
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            
+            // Engineer form
+            document.getElementById('engineerForm').addEventListener('submit', handleCreateEngineer);
+            
+            // Customer form
+            document.getElementById('customerForm').addEventListener('submit', handleCreateCustomer);
+            
+            // Ticket form
+            document.getElementById('ticketForm').addEventListener('submit', handleCreateTicket);
+        }
+
+        // Authentication functions
+        async function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentUser = username;
+                    currentRole = data.message.includes('ENGINEER') ? 'ENGINEER' : 'CUSTOMER';
+                    
+                    showMainApp();
+                    showMessage('Login successful!', 'success');
+                    
+                    // Load initial data
+                    loadEngineers();
+                    loadCustomers();
+                    loadTickets();
+                } else {
+                    showMessage(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showMessage('Error connecting to server', 'error');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            currentRole = null;
+            
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('mainApp').classList.add('hidden');
+            document.getElementById('userInfo').classList.add('hidden');
+            
+            // Reset forms
+            document.getElementById('loginForm').reset();
+            
+            showMessage('Logged out successfully', 'success');
+        }
+
+        function showMainApp() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userInfo').classList.remove('hidden');
+            
+            document.getElementById('currentUser').textContent = currentUser;
+            document.getElementById('currentRole').textContent = currentRole;
+        }
+
+        // Tab navigation
+        function showTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked nav tab
+            event.target.classList.add('active');
+        }
+
+        // Engineer functions
+        async function handleCreateEngineer(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('engineerUsername').value;
+            const password = document.getElementById('engineerPassword').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/engineers`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Username': currentUser,
+                        'X-User-Role': currentRole
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    showMessage('Engineer created successfully!', 'success');
+                    document.getElementById('engineerForm').reset();
+                    loadEngineers();
+                } else {
+                    showMessage('Error creating engineer', 'error');
+                }
+            } catch (error) {
+                showMessage('Error connecting to server', 'error');
+            }
+        }
+
+        async function loadEngineers() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/engineers`);
+                const engineers = await response.json();
+                
+                displayEngineers(engineers);
+                populateEngineerDropdown(engineers);
+            } catch (error) {
+                showMessage('Error loading engineers', 'error');
+            }
+        }
+
+        function displayEngineers(engineers) {
+            const container = document.getElementById('engineersList');
+            
+            if (engineers.length === 0) {
+                container.innerHTML = '<p>No engineers found.</p>';
+                return;
+            }
+            
+            let html = '<table class="table"><thead><tr><th>ID</th><th>Username</th><th>Actions</th></tr></thead><tbody>';
+            
+            engineers.forEach(engineer => {
+                html += `
+                    <tr>
+                        <td>${engineer.id}</td>
+                        <td>${engineer.username}</td>
+                        <td>
+                            <button class="btn-danger" onclick="deleteEngineer(${engineer.id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function populateEngineerDropdown(engineers) {
+            const select = document.getElementById('ticketEngineer');
+            select.innerHTML = '<option value="">Select Engineer</option>';
+            
+            engineers.forEach(engineer => {
+                const option = document.createElement('option');
+                option.value = engineer.id;
+                option.textContent = engineer.username;
+                select.appendChild(option);
+            });
+        }
+
+        async function deleteEngineer(id) {
+            if (!confirm('Are you sure you want to delete this engineer?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/engineers/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showMessage('Engineer deleted successfully!', 'success');
+                    loadEngineers();
+                } else {
+                    showMessage('Error deleting engineer', 'error');
+                }
+            } catch (error) {
+                showMessage('Error connecting to server', 'error');
+            }
+        }
+
+        // Customer functions
+        async function handleCreateCustomer(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('customerUsername').value;
+            const password = document.getElementById('customerPassword').value;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/customers`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (response.ok) {
+                    showMessage('Customer created successfully!', 'success');
+                    document.getElementById('customerForm').reset();
+                    loadCustomers();
+                } else {
+                    showMessage('Error creating customer', 'error');
+                }
+            } catch (error) {
+                showMessage('Error connecting to server', 'error');
+            }
+        }
+
+        async function loadCustomers() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/customers`);
+                const customers = await response.json();
+                
+                displayCustomers(customers);
+                populateCustomerDropdown(customers);
+            } catch (error) {
+                showMessage('Error loading customers', 'error');
+            }
+        }
+
+        function displayCustomers(customers) {
+            const container = document.getElementById('customersList');
+            
+            if (customers.length === 0) {
+                container.innerHTML = '<p>No customers found.</p>';
+                return;
+            }
+            
+            let html = '<table class="table"><thead><tr><th>ID</th><th>Username</th></tr></thead><tbody>';
+            
+            customers.forEach(customer => {
+                html += `
+                    <tr>
+                        <td>${customer.id}</td>
+                        <td>${customer.username}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function populateCustomerDropdown(customers) {
+            const select = document.getElementById('ticketCustomer');
+            select.innerHTML = '<option value="">Select Customer</option>';
+            
+            customers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id;
+                option.textContent = customer.username;
+                select.appendChild(option);
+            });
+        }
+
+        // Ticket functions
+        async function handleCreateTicket(e) {
+            e.preventDefault();
+            
+            const description = document.getElementById('ticketDescription').value;
+            const customerId = document.getElementById('ticketCustomer').value;
+            const engineerId = document.getElementById('ticketEngineer').value || null;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/tickets`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Username': currentUser,
+                        'X-User-Role': currentRole
+                    },
+                    body: JSON.stringify({
+                        description,
+                        customerId: parseInt(customerId),
+                        engineerId: engineerId ? parseInt(engineerId) : null
+                    })
+                });
+                
+                if (response.ok) {
+                    showMessage('Ticket created successfully!', 'success');
+                    document.getElementById('ticketForm').reset();
+                    loadTickets();
+                } else {
+                    showMessage('Error creating ticket', 'error');
+                }
+            } catch (error) {
+                showMessage('Error connecting to server', 'error');
+            }
+        }
+
+        async function loadTickets() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/tickets`);
+                const tickets = await response.json();
+                
+                displayTickets(tickets);
+            } catch (error) {
+                showMessage('Error loading tickets', 'error');
+            }
+        }
+
+        function displayTickets(tickets) {
+            const container = document.getElementById('ticketsList');
+            
+            if (tickets.length === 0) {
+                container.innerHTML = '<p>No tickets found.</p>';
+                return;
+            }
+            
+            let html = '<table class="table"><thead><tr><th>ID</th><th>Description</th><th>Status</th><th>Customer</th><th>Engineer</th><th>Actions</th></tr></thead><tbody>';
+            
+            tickets.forEach(ticket => {
+                html += `
+                    <tr>
+                        <td>${ticket.id}</td>
+                        <td>${ticket.description}</td>
+                        <td><span class="status-badge status-${ticket.status.toLowerCase()}">${ticket.status}</span></td>
+                        <td>${ticket.createdBy ? ticket.createdBy.username : 'N/A'}</td>
+                        <td>${ticket.acknowledgedBy ? ticket.acknowledgedBy.username : 'Unassigned'}</td>
+                        <td>
+                            ${ticket.status === 'CREATED' ? `<button class="btn-success" onclick="acknowledgeTicket(${ticket.id})">Acknowledge</button>` : ''}
+                            <button class="btn-danger" onclick="deleteTicket(${ticket.id})">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        async function acknowledgeTicket(ticketId) {
+            // Get current user's engineer ID (this is a simplified approach)
+            try {
+                const engineers = await fetch(`${API_BASE_URL}/engineers`).then(r => r.json());
+                const currentEngineer = engineers.find(e => e.username === currentUser);
+                
+                if (!currentEngineer) {
+                    showMessage('Only engineers can acknowledge tickets', 'error');
+                    return;
+                }
+                
+                const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/acknowledge/${currentEngineer.id}`, {
+                    method: 'PUT'
+                });
+                
+                if (response.ok) {
+                    showMessage('Ticket acknowledged successfully!', 'success');
+                    loadTickets();
+                } else {
+                    showMessage('Error acknowledging ticket', 'error');
+                }
+            } catch (error) {
+                showMessage('Error connecting to server', 'error');
+            }
+        }
+
+        async function deleteTicket(id) {
+            if (!confirm('Are you sure you want to delete this ticket?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/tickets/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showMessage('Ticket deleted successfully!', 'success');
+                    loadTickets();
+                } else {
+                    showMessage('Error deleting ticket', 'error');
+                }
+            } catch (error) {
+                showMessage('Error connecting to server', 'error');
+            }
+        }
+
+        // Utility functions
+        function showMessage(message, type) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `alert alert-${type}`;
+            messageDiv.textContent = message;
+            
+            messagesContainer.appendChild(messageDiv);
+            
+            // Remove message after 5 seconds
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

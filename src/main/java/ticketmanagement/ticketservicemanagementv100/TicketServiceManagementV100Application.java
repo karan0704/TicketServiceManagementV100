@@ -1,5 +1,6 @@
 package ticketmanagement.ticketservicemanagementv100;
 
+import org.springframework.beans.factory.annotation.Value;
 import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 import ticketmanagement.ticketservicemanagementv100.model.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
@@ -24,21 +25,18 @@ public class TicketServiceManagementV100Application {
      * @return A CommandLineRunner bean.
      */
     @Bean
-    public CommandLineRunner createDefaultEngineer(EngineerRepository engineerRepository) {
+    public CommandLineRunner createDefaultEngineer(EngineerRepository engineerRepository, @Value("${app.default.engineer.username}")  String defaultUsername, @Value("${app.default.engineer.password}")  String defaultPassword) {
         return args -> {
-            final String defaultEngineerUsername = "default_engineer";
-            final String defaultEngineerPassword = "password";
-
             // Check if the default engineer already exists
-            if (engineerRepository.findByUsername(defaultEngineerUsername).isEmpty()) {
+            if (engineerRepository.findByUsername(defaultUsername).isEmpty()) {
                 Engineer defaultEngineer = new Engineer();
-                defaultEngineer.setUsername(defaultEngineerUsername);
-                defaultEngineer.setPassword(defaultEngineerPassword); // Password is now plain text
+                defaultEngineer.setUsername(defaultUsername);
+                defaultEngineer.setPassword(defaultPassword); // Password is now plain text
                 defaultEngineer.setRole(UserRole.ENGINEER);
                 engineerRepository.save(defaultEngineer);
-                System.out.println("Default engineer '" + defaultEngineerUsername + "' created successfully!");
+                System.out.println("Default engineer '" + defaultUsername + "' created successfully!");
             } else {
-                System.out.println("Default engineer '" + defaultEngineerUsername + "' already exists.");
+                System.out.println("Default engineer '" + defaultUsername + "' already exists.");
             }
         };
     }
