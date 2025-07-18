@@ -1,6 +1,8 @@
 package ticketmanagement.ticketservicemanagementv100.controller;
 
 import org.springframework.http.HttpStatus;
+import ticketmanagement.ticketservicemanagementv100.dto.EngineerRegistrationDTO;
+import ticketmanagement.ticketservicemanagementv100.dto.EngineerResponseDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 import ticketmanagement.ticketservicemanagementv100.service.EngineerService;
 import jakarta.persistence.EntityNotFoundException;
@@ -18,21 +20,22 @@ public class EngineerController {
     private final EngineerService engineerService;
 
     @PostMapping
-    public ResponseEntity<Engineer> createEngineer(@RequestBody Engineer engineer, @RequestHeader("X-User-Role") String role) {
+    public ResponseEntity<EngineerResponseDTO> createEngineer(@RequestBody EngineerRegistrationDTO dto,
+                                                              @RequestHeader("X-User-Role") String role) {
         if (!"ENGINEER".equalsIgnoreCase(role)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build(); // 403 Forbidden
         }
-        Engineer saved = engineerService.createEngineer(engineer);
-        return ResponseEntity.ok(saved);
+        EngineerResponseDTO saved = engineerService.createEngineer(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
     @GetMapping
-    public ResponseEntity<List<Engineer>> getAllEngineers() {
+    public ResponseEntity<List<EngineerResponseDTO>> getAllEngineers() {
         return ResponseEntity.ok(engineerService.getAllEngineers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Engineer> getEngineerById(@PathVariable Long id) {
+    public ResponseEntity<EngineerResponseDTO> getEngineerById(@PathVariable Long id) {
         return engineerService.getEngineerById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
