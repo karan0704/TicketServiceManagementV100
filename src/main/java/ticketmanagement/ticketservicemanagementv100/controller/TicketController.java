@@ -21,9 +21,11 @@ import java.util.List;
  * REST Controller for managing Ticket resources.
  * This controller handles HTTP requests related to tickets,
  * delegating business logic to the TicketService.
+ *
+ * Updated: Changed base request mapping to "/api/tickets" to match frontend.
  */
 @RestController
-@RequestMapping("/tickets")
+@RequestMapping("/api/tickets") // Changed to /api/tickets
 @RequiredArgsConstructor
 public class TicketController {
 
@@ -31,12 +33,15 @@ public class TicketController {
     private final CustomerRepository customerRepo;
     private final EngineerRepository  engineerRepo;
     private final TicketRepository ticketRepo;
+
     /**
      * Creates a new Ticket using a TicketCreationDTO.
      * This endpoint expects a DTO containing the ticket description,
      * the customerId, and an optional engineerId for immediate assignment.
      *
      * @param ticketDto The TicketCreationDTO object containing description, customerId, and optional engineerId.
+     * @param username The username of the customer creating the ticket (from X-Username header).
+     * @param role The role of the user (from X-User-Role header).
      * @return ResponseEntity containing the created Ticket and HTTP status 201 (Created).
      */
     @PostMapping
@@ -129,13 +134,13 @@ public class TicketController {
      * Deletes a Ticket by its ID.
      *
      * @param id The ID of the ticket to delete.
+     * @param role The role of the user (from X-User-Role header).
      * @return ResponseEntity with HTTP status 200 (OK) if deleted successfully,
      * or HTTP status 404 (Not Found) if the ticket does not exist.
      */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTicket(@PathVariable Long id,
-                                             @RequestHeader("X-User-Role") String role) { // Add this parameter
-        // Add role restriction check
+                                             @RequestHeader("X-User-Role") String role) {
         if (!"ENGINEER".equalsIgnoreCase(role)) {
             return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
@@ -144,19 +149,26 @@ public class TicketController {
     }
 
     /**
-     * Acknowledges a ticket by assigning an engineer.
+     * Acknowledges a ticket by assigning the currently logged-in engineer.
+     * The engineer's username is retrieved from the X-Username header.
      *
-     * @param ticketId   The ID of the ticket to acknowledge.
-     * @param engineerId The ID of the engineer acknowledging the ticket.
+     * @param ticketId The ID of the ticket to acknowledge.
+     * @param engineerUsername The username of the engineer acknowledging the ticket (from X-Username header).
      * @return ResponseEntity containing the acknowledged Ticket (HTTP 200 OK),
      * or HTTP status 404 (Not Found) if ticket or engineer does not exist.
+     * @return ResponseEntity with HTTP status 403 (Forbidden) if the user is not an ENGINEER.
      */
-    @PutMapping("/{ticketId}/acknowledge/{engineerId}")
+    @PutMapping("/{ticketId}/acknowledge") // Modified endpoint: removed {engineerId} from path
     public ResponseEntity<Ticket> acknowledgeTicket(
             @PathVariable Long ticketId,
-            @PathVariable Long engineerId) {
+            @RequestHeader("X-Username") String engineerUsername, // Get username from header
+            @RequestHeader("X-User-Role") String role) { // Get role from header for validation
+        if (!"ENGINEER".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         try {
-            Ticket acknowledgedTicket = ticketService.acknowledgeTicket(ticketId, engineerId);
+            // Call service method with username
+            Ticket acknowledgedTicket = ticketService.acknowledgeTicket(ticketId, engineerUsername);
             return ResponseEntity.ok(acknowledgedTicket);
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();

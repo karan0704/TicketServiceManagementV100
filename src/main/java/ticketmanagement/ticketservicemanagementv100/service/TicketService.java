@@ -63,21 +63,22 @@ public class TicketService {
     }
 
     /**
-     * Acknowledges a ticket by assigning an engineer and updating its status.
+     * Acknowledges a ticket by assigning the engineer identified by their username
+     * and updating its status.
      *
-     * @param ticketId   The ID of the ticket to acknowledge.
-     * @param engineerId The ID of the engineer acknowledging the ticket.
+     * @param ticketId The ID of the ticket to acknowledge.
+     * @param engineerUsername The username of the engineer acknowledging the ticket.
      * @return The updated Ticket object.
      * @throws EntityNotFoundException if the ticket or engineer is not found.
      */
-    public Ticket acknowledgeTicket(Long ticketId, Long engineerId) {
+    public Ticket acknowledgeTicket(Long ticketId, String engineerUsername) {
         // Find the ticket by ID, throwing an exception if not found
         Ticket ticket = ticketRepo.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id " + ticketId));
 
-        // Find the engineer by ID, throwing an exception if not found
-        Engineer engineer = engineerRepo.findById(engineerId)
-                .orElseThrow(() -> new EntityNotFoundException("Engineer not found with id " + engineerId));
+        // Find the engineer by username, throwing an exception if not found
+        Engineer engineer = engineerRepo.findByUsername(engineerUsername)
+                .orElseThrow(() -> new EntityNotFoundException("Engineer not found with username " + engineerUsername));
 
         // Update the ticket status and assigned engineer
         ticket.setStatus(TicketStatus.ACKNOWLEDGED);
