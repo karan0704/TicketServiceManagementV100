@@ -1,9 +1,13 @@
 package ticketmanagement.ticketservicemanagementv100.controller;
 
 import ticketmanagement.ticketservicemanagementv100.dto.TicketCreationDTO;
+import ticketmanagement.ticketservicemanagementv100.dto.TicketUpdateDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Customer;
+import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 import ticketmanagement.ticketservicemanagementv100.model.Ticket;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
+import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
+import ticketmanagement.ticketservicemanagementv100.repository.TicketRepository;
 import ticketmanagement.ticketservicemanagementv100.service.TicketService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +29,8 @@ public class TicketController {
 
     private final TicketService ticketService; // Inject the service
     private final CustomerRepository customerRepo;
-
+    private final EngineerRepository  engineerRepo;
+    private final TicketRepository ticketRepo;
     /**
      * Creates a new Ticket using a TicketCreationDTO.
      * This endpoint expects a DTO containing the ticket description,
@@ -88,19 +93,37 @@ public class TicketController {
      * Updates an existing Ticket.
      *
      * @param id    The ID of the ticket to update.
-     * @param input The Ticket object with updated details.
+     * @param dto The Ticket object with updated details.
      * @return ResponseEntity containing the updated Ticket (HTTP 200 OK),
      * or HTTP status 404 (Not Found) if the ticket does not exist.
      */
     @PutMapping("/{id}")
-    public ResponseEntity<Ticket> updateTicket(@PathVariable Long id, @RequestBody Ticket input) {
+    public ResponseEntity<Ticket> updateTicket(@PathVariable Long id,
+                                               @RequestBody TicketUpdateDTO dto) {
         try {
-            Ticket updatedTicket = ticketService.updateTicket(id, input);
-            return ResponseEntity.ok(updatedTicket);
+            Ticket ticket = ticketService.getTicketById(id)
+                    .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
+
+            if (dto.getEngineerId() != null) {
+                Engineer engineer = engineerRepo.findById(dto.getEngineerId())
+                        .orElseThrow(() -> new EntityNotFoundException("Engineer not found"));
+                ticket.setAcknowledgedBy(engineer);
+            }
+
+            ticket.setDescription(dto.getDescription());
+            ticket.setStatus(dto.getStatus());
+            ticket.setTentativeResolutionDate(dto.getTentativeResolutionDate());
+            ticket.setCustomerCommentOnTicket(dto.getCustomerCommentOnTicket());
+            ticket.setEngineerCommentOnTicket(dto.getEngineerCommentOnTicket());
+
+            Ticket updated = ticketRepo.save(ticket);
+            return ResponseEntity.ok(updated);
+
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
+
 
     /**
      * Deletes a Ticket by its ID.

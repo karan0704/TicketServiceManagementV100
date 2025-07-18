@@ -117,16 +117,21 @@ public class TicketService {
     public Ticket updateTicket(Long id, Ticket ticketDetails) {
         return ticketRepo.findById(id)
                 .map(ticket -> {
-                    // Update only the description and status from the provided details
                     ticket.setDescription(ticketDetails.getDescription());
                     ticket.setStatus(ticketDetails.getStatus());
-                    // You might want to allow updating acknowledgedBy as well,
-                    // depending on your business rules. For now, it's commented out.
-                    // ticket.setAcknowledgedBy(ticketDetails.getAcknowledgedBy());
-                    return ticketRepo.save(ticket); // Save the updated ticket
+                    ticket.setTentativeResolutionDate(ticketDetails.getTentativeResolutionDate());
+                    ticket.setCustomerCommentOnTicket(ticketDetails.getCustomerCommentOnTicket());
+                    ticket.setEngineerCommentOnTicket(ticketDetails.getEngineerCommentOnTicket());
+
+                    if (ticketDetails.getAcknowledgedBy() != null) {
+                        ticket.setAcknowledgedBy(ticketDetails.getAcknowledgedBy());
+                    }
+
+                    return ticketRepo.save(ticket);
                 })
                 .orElseThrow(() -> new EntityNotFoundException("Ticket not found with id " + id));
     }
+
 
     /**
      * Deletes a ticket by its ID.
