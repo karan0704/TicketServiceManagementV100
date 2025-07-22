@@ -202,15 +202,23 @@ A Ticket is created by one Customer (many tickets to one customer).
 A Ticket is assigned to one Engineer (optional at first, many tickets to one engineer).
 how can i Define Relationships by which annotation
 
-write a frontend having round effects hover dynamic light color theme with fonts icon
-
-header like a real webpage
-add some other light colors
-
-header should be fix
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+FrontEND
 
 write a frontend having round effects hover dynamic light color theme with fonts icon
+header like a real webpage, add some other light standard colors, header should be fix
+ONLY WRITE a code of login page, with a header and footer
+make everything align like icons box inputs
+also webpages anme on header shouldnt be visible until user is login
+write header name there as Ticket Service Management which can seen anytime on header
 
+and now make different file like for login there will be diff
+login.css login.js login.html after that index.html and other folder as we increasing our frontend
+now when we login to page there should be dashboard according to users which login
+if customer is login then it should be login into customer dashboard
+where we can see tickets of his only created and also he can create ticket
+also different file for different user, first create for engineerin same theme as login page which should match
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
 1. Logged in as: () this shouldn't be seen on login page
 
 2. Created tickets r not showing up in tickets
