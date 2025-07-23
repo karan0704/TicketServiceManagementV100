@@ -4,10 +4,11 @@
 function updateHeaderVisibility() {
     const headerLogoText = document.getElementById('headerLogoText');
     const headerNav = document.getElementById('headerNav');
+    // Check localStorage for 'loggedIn' status
     const isLoggedIn = localStorage.getItem('loggedIn') === 'true';
 
+    // On login page, header elements are hidden until successful login
     if (isLoggedIn) {
-        // On login page, header elements are hidden until successful login
         headerLogoText.classList.remove('hidden');
         headerNav.classList.remove('hidden');
     } else {
@@ -51,6 +52,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
         const data = await response.json(); // Parse the JSON response
 
+        console.log('Login Page - Backend response status:', response.status);
+        console.log('Login Page - Backend response data:', data);
+
         if (response.ok) {
             // Login successful
             messageBox.textContent = data.message || 'Login successful!';
@@ -60,38 +64,45 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             // Store user data and login status
             localStorage.setItem('username', data.username);
             localStorage.setItem('role', data.role);
-            localStorage.setItem('loggedIn', 'true'); // Set loggedIn flag
+            localStorage.setItem('loggedIn', 'true'); // Explicitly store as string 'true'
 
-            // Update header visibility after successful login
+            console.log('Login Page - Stored username:', localStorage.getItem('username'));
+            console.log('Login Page - Stored role:', localStorage.getItem('role'));
+            console.log('Login Page - Stored loggedIn status:', localStorage.getItem('loggedIn'));
+
+            // Update header visibility after successful login (for login page only)
             updateHeaderVisibility();
 
             // Redirect based on user role
             if (data.role === 'CUSTOMER') {
+                console.log('Login Page - Redirecting to customer_dashboard.html');
                 window.location.href = 'customer_dashboard.html';
             } else if (data.role === 'ENGINEER') {
+                console.log('Login Page - Redirecting to engineer_dashboard.html');
                 window.location.href = 'engineer_dashboard.html';
             } else {
                 // Fallback for unknown roles
-                console.warn('Unknown user role:', data.role);
+                console.warn('Login Page - Unknown user role received from backend:', data.role);
                 window.location.href = 'index.html'; // Or a generic dashboard
             }
 
-            console.log('Login successful:', data);
         } else {
             // Login failed
             messageBox.textContent = data.message || 'Login failed. Please check your credentials.';
             messageBox.classList.add('show');
             localStorage.removeItem('loggedIn'); // Ensure loggedIn flag is false
             localStorage.removeItem('role'); // Clear role on failed login
+            localStorage.removeItem('username'); // Clear username on failed login
             updateHeaderVisibility(); // Update header visibility on failed login
-            console.error('Login failed:', data);
+            console.error('Login Page - Login failed:', data);
         }
     } catch (error) {
         messageBox.textContent = 'An error occurred. Please try again later.';
         messageBox.classList.add('show');
         localStorage.removeItem('loggedIn'); // Ensure loggedIn flag is false
         localStorage.removeItem('role'); // Clear role on error
+        localStorage.removeItem('username'); // Clear username on error
         updateHeaderVisibility(); // Update header visibility on error
-        console.error('Fetch error:', error);
+        console.error('Login Page - Fetch error:', error);
     }
 });
