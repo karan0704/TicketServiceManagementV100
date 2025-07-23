@@ -233,4 +233,7 @@ ticket list should look good
 
 add fonts
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
-
+i have folder of fe5 name D:\Karan Ticket Project\TicketServiceManagementV100\Text FIles\FE5\css
+u know i have sevaral files and folder in it
+write all that code in fe5 in a single textfile
+make a py script for thast
