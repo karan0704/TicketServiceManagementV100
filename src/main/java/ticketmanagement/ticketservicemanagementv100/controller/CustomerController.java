@@ -4,7 +4,6 @@ import org.springframework.http.HttpStatus;
 import ticketmanagement.ticketservicemanagementv100.dto.CustomerRegistrationDTO;
 import ticketmanagement.ticketservicemanagementv100.dto.CustomerResponseDTO;
 import ticketmanagement.ticketservicemanagementv100.model.Customer;
-import ticketmanagement.ticketservicemanagementv100.model.UserRole;
 import ticketmanagement.ticketservicemanagementv100.service.CustomerService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

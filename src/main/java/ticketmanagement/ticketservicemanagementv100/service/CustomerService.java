@@ -18,17 +18,6 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
 
     /**
-     * Creates a new Customer.
-     *
-     * @param customer The Customer object to be saved.
-     * @return The saved Customer object.
-     */
-    public Customer createCustomer(Customer customer) {
-        customer.setRole(UserRole.CUSTOMER);
-        return customerRepository.save(customer);
-    }
-
-    /**
      * Retrieves all Customers.
      *
      * @return A list of all Customer objects.
@@ -77,9 +66,7 @@ public class CustomerService {
         }
         customerRepository.deleteById(id);
     }
-    /*public void deleteCustomer(Long id) {
-        customerRepository.deleteById(id);
-    }*/
+
     public Customer registerCustomerFromDTO(CustomerRegistrationDTO dto) {
         if (dto.getUsername() == null || dto.getPassword() == null ||
                 dto.getUsername().isBlank() || dto.getPassword().isBlank()) {
