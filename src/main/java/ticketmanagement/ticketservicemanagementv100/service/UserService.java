@@ -1,62 +1,65 @@
 package ticketmanagement.ticketservicemanagementv100.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import ticketmanagement.ticketservicemanagementv100.entity.User;
+import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
+import ticketmanagement.ticketservicemanagementv100.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ticketmanagement.ticketservicemanagementv100.model.User;
-import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
-import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
 
-import java.util.ArrayList;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
-
-    @Autowired
-    private CustomerRepository customerRepository;
-
-    @Autowired
-    private EngineerRepository engineerRepository;
-
+    private final UserRepository userRepository;
+    
+    public User authenticate(String username, String password) {
+        return userRepository.findByUsernameAndPassword(username, password).orElse(null);
+    }
+    
+    public User findById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+    
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username).orElse(null);
+    }
+    
+    public List<User> findByRole(UserRole role) {
+        return userRepository.findByRole(role);
+    }
+    
+    public User findDefaultEngineer() {
+        return userRepository.findByIsDefaultEngineerTrue().orElse(null);
+    }
+    
+    public User createUser(User user) {
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
+        user.setCreatedAt(LocalDateTime.now());
+        user.setUpdatedAt(LocalDateTime.now());
+        return userRepository.save(user);
+    }
+    
+    public User updateUser(User user) {
+        user.setUpdatedAt(LocalDateTime.now());
+        return userRepository.save(user);
+    }
+    
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+    
     public List<User> getAllUsers() {
-        List<User> allUsers = new ArrayList<>();
-        allUsers.addAll(customerRepository.findAll());
-        allUsers.addAll(engineerRepository.findAll());
-        return allUsers;
+        return userRepository.findAll();
     }
-
-    public Optional<User> getUserById(Long id) {
-        // Try to find in customers first
-        Optional<User> customer = customerRepository.findById(id).map(c -> (User) c);
-        if (customer.isPresent()) {
-            return customer;
-        }
-
-        // If not found in customers, try engineers
-        return engineerRepository.findById(id).map(e -> (User) e);
-    }
-
-    // Note: createUser method removed as you should use CustomerService or EngineerService
-    // to create specific user types with proper roles
-
-    // Note: updateUser method removed as you should use CustomerService or EngineerService
-    // to update specific user types
-
-    // Note: deleteUser method removed as you should use CustomerService or EngineerService
-    // to delete specific user types
-
-    public Optional<User> findByUsername(String username) {
-        // First try to find in customers
-        Optional<User> customer = customerRepository.findByUsername(username)
-                .map(c -> (User) c);
-
-        if (customer.isPresent()) {
-            return customer;
-        }
-
-        // If not found in customers, try engineers
-        return engineerRepository.findByUsername(username)
-                .map(e -> (User) e);
+    
+    public boolean isDefaultEngineer(User user) {
+        return user != null && user.getIsDefaultEngineer();
     }
 }
