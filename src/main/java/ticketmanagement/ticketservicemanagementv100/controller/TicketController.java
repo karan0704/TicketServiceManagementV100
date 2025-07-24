@@ -174,4 +174,57 @@ public class TicketController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    /**
+     * Get tickets created by a specific customer (by username)
+     * Called by frontend: GET /api/tickets/customer/{username}
+     */
+    @GetMapping("/customer/{username}")
+    public ResponseEntity<List<Ticket>> getTicketsByCustomer(
+            @PathVariable String username,
+            @RequestHeader("X-Username") String requestUsername,
+            @RequestHeader("X-User-Role") String role) {
+
+        // Security check: ensure customer can only access their own tickets
+        if (!"CUSTOMER".equalsIgnoreCase(role) || !username.equals(requestUsername)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            Customer customer = customerRepo.findByUsername(username)
+                    .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+
+            List<Ticket> tickets = ticketRepo.findByCreatedById(customer.getId());
+            return ResponseEntity.ok(tickets);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * Get tickets assigned to a specific engineer (by username)
+     * Called by frontend: GET /api/tickets/engineer/{username}
+     */
+    @GetMapping("/engineer/{username}")
+    public ResponseEntity<List<Ticket>> getTicketsByEngineer(
+            @PathVariable String username,
+            @RequestHeader("X-Username") String requestUsername,
+            @RequestHeader("X-User-Role") String role) {
+
+        // Security check: ensure engineer can only access their own assigned tickets
+        if (!"ENGINEER".equalsIgnoreCase(role) || !username.equals(requestUsername)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            Engineer engineer = engineerRepo.findByUsername(username)
+                    .orElseThrow(() -> new EntityNotFoundException("Engineer not found"));
+
+            List<Ticket> tickets = ticketRepo.findByAcknowledgedById(engineer.getId());
+            return ResponseEntity.ok(tickets);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }

@@ -1,3 +1,5 @@
+
+
 --- File: .mvn\wrapper\maven-wrapper.properties ---
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -64,7 +66,6 @@ public class TicketServiceManagementV100Application {
         };
     }
 }
-
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\config\CorsConfig.java ---
 package ticketmanagement.ticketservicemanagementv100.config;
@@ -235,7 +236,6 @@ public class CustomerController {
     }
 }
 
-
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\EngineerController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
 
@@ -302,7 +302,6 @@ public class EngineerController {
     }
 }
 
-
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\HomeController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
 
@@ -317,7 +316,6 @@ public class HomeController {
         return "Welcome to the Home Page!";
     }
 }
-
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\LoginController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
@@ -711,7 +709,6 @@ package ticketmanagement.ticketservicemanagementv100.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -721,7 +718,6 @@ import lombok.Setter;
 @Setter
 @Table(name = "customers")
 @NoArgsConstructor
-
 public class Customer extends User {
 }
 
@@ -731,11 +727,9 @@ package ticketmanagement.ticketservicemanagementv100.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 
 
 @Getter
@@ -808,6 +802,7 @@ public enum TicketStatus {
     CLOSED
 }
 
+
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\User.java ---
 package ticketmanagement.ticketservicemanagementv100.model;
 
@@ -843,8 +838,6 @@ public abstract class User {
         this.username = username;
         this.password = password;
     }
-
-
 }
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\UserRole.java ---
@@ -876,7 +869,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 package ticketmanagement.ticketservicemanagementv100.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 import ticketmanagement.ticketservicemanagementv100.model.Engineer;
 
 import java.util.Optional;
@@ -891,7 +883,6 @@ package ticketmanagement.ticketservicemanagementv100.repository;
 
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 import ticketmanagement.ticketservicemanagementv100.model.Ticket;
 import ticketmanagement.ticketservicemanagementv100.model.TicketStatus;
 
@@ -928,17 +919,6 @@ import java.util.Optional;
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
-
-    /**
-     * Creates a new Customer.
-     *
-     * @param customer The Customer object to be saved.
-     * @return The saved Customer object.
-     */
-    public Customer createCustomer(Customer customer) {
-        customer.setRole(UserRole.CUSTOMER);
-        return customerRepository.save(customer);
-    }
 
     /**
      * Retrieves all Customers.
@@ -989,9 +969,7 @@ public class CustomerService {
         }
         customerRepository.deleteById(id);
     }
-    /*public void deleteCustomer(Long id) {
-        customerRepository.deleteById(id);
-    }*/
+
     public Customer registerCustomerFromDTO(CustomerRegistrationDTO dto) {
         if (dto.getUsername() == null || dto.getPassword() == null ||
                 dto.getUsername().isBlank() || dto.getPassword().isBlank()) {
@@ -1075,7 +1053,7 @@ package ticketmanagement.ticketservicemanagementv100.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-impAort ticketmanagement.ticketservicemanagementv100.model.User;
+import ticketmanagement.ticketservicemanagementv100.model.User;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
 
@@ -1339,7 +1317,7 @@ spring.jpa.properties.hibernate.format_sql=true
 server.port=9090
 
 # Optional: Logging
-debug=true
+#debug=true
 
 # For production, change DEBUG to INFO or WARN for less verbose logging
 logging.level.org.hibernate.SQL=INFO
@@ -1390,7 +1368,7 @@ spring.jpa.properties.hibernate.format_sql=true
 server.port=9090
 
 # Optional: Logging
-debug=true
+#debug=true
 
 # For production, change DEBUG to INFO or WARN for less verbose logging
 logging.level.org.hibernate.SQL=INFO
