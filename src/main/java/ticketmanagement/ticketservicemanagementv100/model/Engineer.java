@@ -11,6 +11,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
+
 @Table(name = "engineers")
 public class Engineer extends User {
     public Engineer(Long id, String username, String password) {

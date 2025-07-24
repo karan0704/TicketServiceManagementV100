@@ -1,19 +1,20 @@
 package ticketmanagement.ticketservicemanagementv100.controller;
 
-import ticketmanagement.ticketservicemanagementv100.dto.TicketCreationDTO;
-import ticketmanagement.ticketservicemanagementv100.dto.TicketUpdateDTO;
-import ticketmanagement.ticketservicemanagementv100.model.Customer;
-import ticketmanagement.ticketservicemanagementv100.model.Engineer;
-import ticketmanagement.ticketservicemanagementv100.model.Ticket;
-import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
-import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
-import ticketmanagement.ticketservicemanagementv100.repository.TicketRepository;
-import ticketmanagement.ticketservicemanagementv100.service.TicketService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ticketmanagement.ticketservicemanagementv100.dto.TicketCreationDTO;
+import ticketmanagement.ticketservicemanagementv100.dto.TicketUpdateDTO;
+import ticketmanagement.ticketservicemanagementv100.model.Customer;
+import ticketmanagement.ticketservicemanagementv100.model.Engineer;
+import ticketmanagement.ticketservicemanagementv100.model.Ticket;
+import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
+import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
+import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
+import ticketmanagement.ticketservicemanagementv100.repository.TicketRepository;
+import ticketmanagement.ticketservicemanagementv100.service.TicketService;
 
 import java.util.List;
 
@@ -21,7 +22,7 @@ import java.util.List;
  * REST Controller for managing Ticket resources.
  * This controller handles HTTP requests related to tickets,
  * delegating business logic to the TicketService.
- *
+ * <p>
  * Updated: Changed base request mapping to "/api/tickets" to match frontend.
  */
 @RestController
@@ -31,7 +32,7 @@ public class TicketController {
 
     private final TicketService ticketService; // Inject the service
     private final CustomerRepository customerRepo;
-    private final EngineerRepository  engineerRepo;
+    private final EngineerRepository engineerRepo;
     private final TicketRepository ticketRepo;
 
     /**
@@ -40,8 +41,8 @@ public class TicketController {
      * the customerId, and an optional engineerId for immediate assignment.
      *
      * @param ticketDto The TicketCreationDTO object containing description, customerId, and optional engineerId.
-     * @param username The username of the customer creating the ticket (from X-Username header).
-     * @param role The role of the user (from X-User-Role header).
+     * @param username  The username of the customer creating the ticket (from X-Username header).
+     * @param role      The role of the user (from X-User-Role header).
      * @return ResponseEntity containing the created Ticket and HTTP status 201 (Created).
      */
     @PostMapping
@@ -97,7 +98,7 @@ public class TicketController {
     /**
      * Updates an existing Ticket.
      *
-     * @param id    The ID of the ticket to update.
+     * @param id  The ID of the ticket to update.
      * @param dto The Ticket object with updated details.
      * @return ResponseEntity containing the updated Ticket (HTTP 200 OK),
      * or HTTP status 404 (Not Found) if the ticket does not exist.
@@ -133,7 +134,7 @@ public class TicketController {
     /**
      * Deletes a Ticket by its ID.
      *
-     * @param id The ID of the ticket to delete.
+     * @param id   The ID of the ticket to delete.
      * @param role The role of the user (from X-User-Role header).
      * @return ResponseEntity with HTTP status 200 (OK) if deleted successfully,
      * or HTTP status 404 (Not Found) if the ticket does not exist.
@@ -152,7 +153,7 @@ public class TicketController {
      * Acknowledges a ticket by assigning the currently logged-in engineer.
      * The engineer's username is retrieved from the X-Username header.
      *
-     * @param ticketId The ID of the ticket to acknowledge.
+     * @param ticketId         The ID of the ticket to acknowledge.
      * @param engineerUsername The username of the engineer acknowledging the ticket (from X-Username header).
      * @return ResponseEntity containing the acknowledged Ticket (HTTP 200 OK),
      * or HTTP status 404 (Not Found) if ticket or engineer does not exist.

@@ -1,14 +1,16 @@
 package ticketmanagement.ticketservicemanagementv100.controller;
 
-import ticketmanagement.ticketservicemanagementv100.entity.*;
-import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
-import ticketmanagement.ticketservicemanagementv100.service.*;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ticketmanagement.ticketservicemanagementv100.entity.TicketCategory;
+import ticketmanagement.ticketservicemanagementv100.entity.User;
+import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
+import ticketmanagement.ticketservicemanagementv100.service.TicketCategoryService;
+import ticketmanagement.ticketservicemanagementv100.service.UserService;
 
-import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,22 +22,22 @@ import java.util.Map;
 public class AdminController {
     private final UserService userService;
     private final TicketCategoryService categoryService;
-    
+
     @PostMapping("/customers")
     public ResponseEntity<Map<String, Object>> createCustomer(@RequestBody User customer, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null || !userService.isDefaultEngineer(currentUser)) {
             response.put("success", false);
             response.put("message", "Access denied");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
-        
+
         try {
             customer.setRole(UserRole.CUSTOMER);
             customer.setIsDefaultEngineer(false);
-            
+
             User createdCustomer = userService.createUser(customer);
             response.put("success", true);
             response.put("customer", createdCustomer);
@@ -47,22 +49,22 @@ public class AdminController {
             return ResponseEntity.badRequest().body(response);
         }
     }
-    
+
     @PostMapping("/engineers")
     public ResponseEntity<Map<String, Object>> createEngineer(@RequestBody User engineer, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null || !userService.isDefaultEngineer(currentUser)) {
             response.put("success", false);
             response.put("message", "Access denied");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
-        
+
         try {
             engineer.setRole(UserRole.ENGINEER);
             engineer.setIsDefaultEngineer(false);
-            
+
             User createdEngineer = userService.createUser(engineer);
             response.put("success", true);
             response.put("engineer", createdEngineer);
@@ -74,18 +76,18 @@ public class AdminController {
             return ResponseEntity.badRequest().body(response);
         }
     }
-    
+
     @GetMapping("/customers")
     public ResponseEntity<Map<String, Object>> getAllCustomers(HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null || !userService.isDefaultEngineer(currentUser)) {
             response.put("success", false);
             response.put("message", "Access denied");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
-        
+
         try {
             List<User> customers = userService.findByRole(UserRole.CUSTOMER);
             response.put("success", true);
@@ -97,18 +99,18 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-    
+
     @PostMapping("/categories")
     public ResponseEntity<Map<String, Object>> createCategory(@RequestBody TicketCategory category, HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null || !userService.isDefaultEngineer(currentUser)) {
             response.put("success", false);
             response.put("message", "Access denied");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
-        
+
         try {
             TicketCategory createdCategory = categoryService.createCategory(category);
             response.put("success", true);
@@ -121,18 +123,18 @@ public class AdminController {
             return ResponseEntity.badRequest().body(response);
         }
     }
-    
+
     @GetMapping("/categories")
     public ResponseEntity<Map<String, Object>> getAllCategories(HttpSession session) {
         Map<String, Object> response = new HashMap<>();
         User currentUser = (User) session.getAttribute("currentUser");
-        
+
         if (currentUser == null || !userService.isDefaultEngineer(currentUser)) {
             response.put("success", false);
             response.put("message", "Access denied");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
         }
-        
+
         try {
             List<TicketCategory> categories = categoryService.getAllCategories();
             response.put("success", true);
