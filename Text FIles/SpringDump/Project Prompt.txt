@@ -5,63 +5,52 @@ add tentativeDate or something like that to which time issue can be resolved
 
 Customer should be able to update their detail
 
-Comprehensive Ticket Management System Overview
-This project delivers a robust and user-friendly Ticket Management System, meticulously designed to streamline the process of handling customer support inquiries and internal task assignments. It comprises a powerful backend API and an intuitive frontend interface, working in tandem to facilitate efficient management of tickets, user accounts (customers), and engineer accounts.
+#Comprehensive Ticket Management System Overview
+This project delivers a robust and user-friendly Ticket Management System, meticulously designed to streamline the process of handling customer support inquiries
+and internal task assignments. It comprises a powerful backend API and an intuitive frontend interface,
+working in tandem to facilitate efficient management of tickets, user accounts (customers), and engineer accounts.
 
-Project Purpose
-The primary goal of this system is to provide a structured environment where customers can easily report issues, and a dedicated team of engineers can effectively manage, track, and resolve these issues. The system emphasizes clear role separation, ensuring that users only access functionalities relevant to their responsibilities.
+#Project Purpose
+The primary goal of this system is to provide a structured environment where customers can easily report issues,
+and a dedicated team of engineers can effectively manage, track, and resolve these issues.
+The system emphasizes clear role separation, ensuring that users only access functionalities relevant to their responsibilities.
 
-Key Features
+#Key Features
 The system offers a range of functionalities tailored to different user roles:
 
-User Authentication & Authorization:
+#User Authentication & Authorization:
+1. Supports distinct user roles: CUSTOMER and ENGINEER.
+2. A secure login mechanism authenticates users based on their credentials.
+3. All subsequent actions are strictly controlled by role-based access, ensuring users can only perform authorized operations.
+For instance, creating engineer accounts or deleting tickets is restricted to engineers.
 
-Supports distinct user roles: CUSTOMER and ENGINEER.
-
-A secure login mechanism authenticates users based on their credentials.
-
-All subsequent actions are strictly controlled by role-based access, ensuring users can only perform authorized operations. For instance, creating engineer accounts or deleting tickets is restricted to engineers.
-
-Ticket Management:
-
-Customer Ticket Creation: Customers can easily create new tickets by providing a description of their issue. When a customer creates a ticket, the system automatically associates the ticket with the creating customer, and there is no dropdown menu for engineer assignment during this process.
+#Ticket Management:
+Customer Ticket Creation: Customers can easily create new tickets by providing a description of their issue.
+                          When a customer creates a ticket, the system automatically associates the ticket with the creating customer,
+                          and there is no dropdown menu for engineer assignment during this process.
 
 Engineer Ticket Operations: Engineers have comprehensive control over tickets:
+                            View all tickets.
+                            Engineer sees both assigned and unassigned tickets (i.e., tickets assigned to them + tickets with no assigned engineer)
+                            Engineer can assign themselves to an unassigned ticket (like the existing acknowledge feature)
+                            Acknowledge newly CREATED tickets, assigning themselves to it.
+                            Update existing tickets, including changing their description, status (e.g., to ACKNOWLEDGED, IN_PROGRESS, CLOSED), assigning or reassigning an engineer, adding customer comments, adding engineer comments, and setting a tentative resolution date.
+                            Delete tickets.
 
-View all tickets.
-
-Acknowledge newly CREATED tickets, assigning themselves to it.
-
-Update existing tickets, including changing their description, status (e.g., to ACKNOWLEDGED, IN_PROGRESS, CLOSED), assigning or reassigning an engineer, adding customer comments, adding engineer comments, and setting a tentative resolution date.
-
-Delete tickets.
-
-User Account Management:
-
+#User Account Management:
 Customer Account Creation: New customer accounts can be created.
-
-Engineer Account Creation: Only existing engineers (acting as administrators) are authorized to create new engineer accounts, reinforcing security and control over privileged roles.
-
+Engineer Account Creation: Only existing engineers (acting as administrators "default_engineer" make him admin) are authorized to create new engineer accounts, reinforcing security and control over privileged roles.
 Account Updates: Both customer and engineer accounts can be updated (e.g., username, password). Customers can update their own details.
+Account Deletion: admin accounts can delete both customer and other engineer accounts.
 
-Account Deletion: Engineer accounts can delete both customer and other engineer accounts.
-
-Detailed Ticket Information:
-
+#Detailed Ticket Information:
 Each ticket comprehensively stores:
-
 A detailed description of the issue.
-
 Its current status (e.g., CREATED, ACKNOWLEDGED, IN_PROGRESS, CLOSED).
-
 The ticketCreateDate (timestamp of creation).
-
 customerCommentOnTicket for customer-provided updates or additional info.
-
 engineerCommentOnTicket for engineer notes and progress updates.
-
 A tentativeResolutionDate to set expectations for issue resolution.
-
 Clear associations with the Customer who created it and the Engineer assigned to it.
 
 Technologies & Frameworks
@@ -197,10 +186,16 @@ so just write should i do how could i do this and what things should i look
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+engineer should be able to see his assigned ticked and unassigned tickets
+engineer should be able to assign himself to ticket
+customer should be able to comment in its created ticket
+engineer should be able to comment in its assigned ticket
+It should show other attributes also tentativeResolutionDate; in engineer dashboard
 
-A Ticket is created by one Customer (many tickets to one customer).
-A Ticket is assigned to one Engineer (optional at first, many tickets to one engineer).
-how can i Define Relationships by which annotation
+now write code which needs to change in order to make this change
+write code of backend only
+
+
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------
 FrontEND

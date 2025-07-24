@@ -432,20 +432,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
 ===== FILE: js\customer_dashboard.js =====
 
-// js/customer_dashboard.js
-
 document.addEventListener('DOMContentLoaded', () => {
+    // Fetch login info from localStorage
     const username = localStorage.getItem('username');
     const role = localStorage.getItem('role');
     const loggedIn = localStorage.getItem('loggedIn');
 
+    // Redirect to login if not logged in or role mismatch
     if (!loggedIn || role !== 'CUSTOMER') {
         window.location.href = 'login.html';
         return;
     }
 
+    // Display logged in username
     document.getElementById('usernameDisplay').textContent = username;
 
+    // Handle logout button click
     document.getElementById('logoutBtn').addEventListener('click', (e) => {
         e.preventDefault();
         localStorage.clear();
@@ -455,40 +457,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const ticketContainer = document.getElementById('customerTicketsList');
     const createTicketForm = document.getElementById('createTicketForm');
 
-    // Fetch customer tickets
+    // Load tickets created by this customer
     async function loadTickets() {
         try {
             const response = await fetch(`http://localhost:9090/api/tickets/customer/${username}`, {
+                method: 'GET',
                 headers: {
                     'X-Username': username,
                     'X-User-Role': role
                 }
             });
 
+            if (!response.ok) {
+                ticketContainer.innerHTML = '<p class="text-red-600">Failed to load tickets.</p>';
+                return;
+            }
+
             const tickets = await response.json();
             ticketContainer.innerHTML = '';
 
+            if (tickets.length === 0) {
+                ticketContainer.innerHTML = '<p class="text-gray-600">No tickets created yet.</p>';
+                return;
+            }
+
             tickets.forEach(ticket => {
                 const card = document.createElement('div');
-                card.className = 'bg-white p-6 rounded-xl shadow hover:shadow-lg transition';
+                card.className = 'bg-white p-6 rounded-xl shadow hover:shadow-lg transition mb-4';
                 card.innerHTML = `
-          <h3 class="text-lg font-semibold text-indigo-700">Ticket ID: #${ticket.id}</h3>
-          <p class="text-sm text-gray-600 mt-2">Description: ${ticket.description}</p>
-          <p class="text-sm text-gray-500 mt-1">Status: <span class="font-medium text-yellow-600">${ticket.status}</span></p>
-          <p class="text-sm text-gray-500 mt-1">Engineer: ${ticket.acknowledgedBy?.username || 'Unassigned'}</p>
-        `;
+                    <h3 class="text-lg font-semibold text-indigo-700">Ticket ID: #${ticket.id}</h3>
+                    <p class="text-sm text-gray-600 mt-2">Description: ${ticket.description}</p>
+                    <p class="text-sm text-gray-500 mt-1">Status: <span class="font-medium text-yellow-600">${ticket.status}</span></p>
+                    <p class="text-sm text-gray-500 mt-1">Engineer: ${ticket.acknowledgedBy?.username || 'Unassigned'}</p>
+                `;
                 ticketContainer.appendChild(card);
             });
         } catch (error) {
-            console.error('Error loading tickets:', error);
+            ticketContainer.innerHTML = `<p class="text-red-600">Error loading tickets: ${error.message}</p>`;
         }
     }
 
-    loadTickets();
-
-    // Handle ticket creation
+    // Submit handler to create new ticket
     createTicketForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
         const description = document.getElementById('ticketDescription').value.trim();
         if (!description) return;
 
@@ -510,84 +522,105 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Failed to create ticket.');
             }
         } catch (error) {
-            console.error('Ticket creation error:', error);
+            alert('Error creating ticket: ' + error.message);
         }
     });
+
+    // Initial tickets load
+    loadTickets();
 });
 
 ===== FILE: js\engineer_dashboard.js =====
 
-// js/engineer_dashboard.js
-
 document.addEventListener('DOMContentLoaded', () => {
+    // Load login details
     const username = localStorage.getItem('username');
     const role = localStorage.getItem('role');
     const loggedIn = localStorage.getItem('loggedIn');
 
+    // Redirect if not logged in or not engineer role
     if (!loggedIn || role !== 'ENGINEER') {
         window.location.href = 'login.html';
         return;
     }
 
+    // Display username in header
     document.getElementById('usernameDisplay').textContent = username;
 
+    // Logout button
     document.getElementById('logoutBtn').addEventListener('click', (e) => {
         e.preventDefault();
         localStorage.clear();
         window.location.href = 'login.html';
     });
 
-    // Fetch and render tickets assigned to engineer
+    // Container for tickets
+    const container = document.getElementById('engineerTicketsList');
+
+    // Fetch tickets assigned to engineer
     async function fetchEngineerTickets() {
         try {
             const response = await fetch(`http://localhost:9090/api/tickets/engineer/${username}`, {
+                method: 'GET',
                 headers: {
                     'X-Username': username,
                     'X-User-Role': role
                 }
             });
 
+            if (!response.ok) {
+                container.innerHTML = '<p class="text-red-600">Failed to load assigned tickets.</p>';
+                return;
+            }
+
             const tickets = await response.json();
-            const container = document.getElementById('engineerTicketsList');
             container.innerHTML = '';
 
-            if (Array.isArray(tickets)) {
-                tickets.forEach(ticket => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-white p-6 rounded-xl shadow hover:shadow-lg transition';
-                    card.innerHTML = `
-                        <h3 class="text-lg font-semibold text-indigo-700">Ticket ID: #${ticket.id}</h3>
-                        <p class="text-sm text-gray-600 mt-2">Description: ${ticket.description}</p>
-                        <p class="text-sm text-gray-500 mt-1">Status: <span class="font-medium text-yellow-600">${ticket.status}</span></p>
-                        <p class="text-sm text-gray-500 mt-1">Customer: ${ticket.createdBy?.username || 'Unknown'}</p>
-                    `;
-                    container.appendChild(card);
-                });
+            if (tickets.length === 0) {
+                container.innerHTML = '<p class="text-gray-600">No tickets assigned to you currently.</p>';
+                return;
             }
+
+            tickets.forEach(ticket => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-6 rounded-xl shadow hover:shadow-lg transition mb-4';
+                card.innerHTML = `
+                    <h3 class="text-lg font-semibold text-indigo-700">Ticket ID: #${ticket.id}</h3>
+                    <p class="text-sm text-gray-600 mt-2">Description: ${ticket.description}</p>
+                    <p class="text-sm text-gray-500 mt-1">Status: <span class="font-medium text-yellow-600">${ticket.status}</span></p>
+                    <p class="text-sm text-gray-500 mt-1">Customer: ${ticket.createdBy?.username || 'Unknown'}</p>
+                `;
+                container.appendChild(card);
+            });
         } catch (error) {
-            console.error('Error fetching engineer tickets:', error);
+            container.innerHTML = `<p class="text-red-600">Error loading tickets: ${error.message}</p>`;
         }
     }
 
+    // Load tickets on page load
     fetchEngineerTickets();
 });
 
 ===== FILE: js\login.js =====
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Get references to form and message box
     const form = document.getElementById('loginForm');
     const messageBox = document.getElementById('messageBox');
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        // Get user inputs
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value.trim();
 
+        // Clear previous messages
         messageBox.classList.add('hidden');
         messageBox.textContent = '';
 
         try {
+            // Call backend /login endpoint
             const response = await fetch('http://localhost:9090/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -596,19 +629,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const data = await response.json();
 
-            if (response.ok) {
+            // On success, store session and redirect based on role
+            if (response.ok && (data.role === 'ENGINEER' || data.role === 'CUSTOMER')) {
                 localStorage.setItem('loggedIn', 'true');
                 localStorage.setItem('username', data.username);
                 localStorage.setItem('role', data.role);
 
                 if (data.role === 'ENGINEER') {
                     window.location.href = 'engineer_dashboard.html';
-                } else if (data.role === 'CUSTOMER') {
-                    window.location.href = 'customer_dashboard.html';
                 } else {
-                    throw new Error('Unknown role');
+                    window.location.href = 'customer_dashboard.html';
                 }
             } else {
+                // Show error message returned by backend or default
                 messageBox.textContent = data.message || 'Login failed.';
                 messageBox.classList.remove('hidden');
             }
