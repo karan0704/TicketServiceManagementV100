@@ -4,8 +4,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ticketmanagement.ticketservicemanagementv100.dto.CustomerRegistrationDTO;
-import ticketmanagement.ticketservicemanagementv100.model.Customer;
-import ticketmanagement.ticketservicemanagementv100.model.UserRole;
+import ticketmanagement.ticketservicemanagementv100.entity.Customer;
+import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
 
 import java.util.List;
@@ -17,11 +17,6 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
 
-    /**
-     * Retrieves all Customers.
-     *
-     * @return A list of all Customer objects.
-     */
     public List<Customer> getAllCustomers() {
         return customerRepository.findAll();
     }
@@ -39,7 +34,7 @@ public class CustomerService {
     /**
      * Updates an existing Customer.
      *
-     * @param id The ID of the customer to update.
+     * @param id              The ID of the customer to update.
      * @param customerDetails The Customer object containing updated details.
      * @return The updated Customer object.
      * @throws EntityNotFoundException if no customer with the given ID is found.

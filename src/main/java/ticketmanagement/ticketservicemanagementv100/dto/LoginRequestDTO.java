@@ -6,16 +6,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * DTO for creating a new Engineer.
+ * Data Transfer Object (DTO) for user login requests.
  */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class EngineerRegistrationDTO {
+public class LoginRequestDTO {
     private String username;
     private String password;
-    private String email;
-    private String specialization;
-    private boolean isDefaultEngineer;
 }

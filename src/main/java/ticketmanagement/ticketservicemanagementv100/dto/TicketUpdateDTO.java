@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ticketmanagement.ticketservicemanagementv100.model.TicketStatus;
+import ticketmanagement.ticketservicemanagementv100.enums.TicketStatus;
 
 import java.time.LocalDate;
 
@@ -15,8 +15,5 @@ import java.time.LocalDate;
 public class TicketUpdateDTO {
     private String description;
     private TicketStatus status;
-    private String customerCommentOnTicket;
-    private String engineerCommentOnTicket;
-    private LocalDate tentativeResolutionDate;
-    private Long engineerId; // Optional reassignment
+    private Long categoryId;
 }

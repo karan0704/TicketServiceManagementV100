@@ -314,7 +314,6 @@ public class AuthController {
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\CustomerController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
 
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -324,6 +323,7 @@ import ticketmanagement.ticketservicemanagementv100.entity.*;
 import ticketmanagement.ticketservicemanagementv100.enums.TicketStatus;
 import ticketmanagement.ticketservicemanagementv100.service.*;
 
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -526,7 +526,6 @@ public class CustomerController {
         }
     }
 }
-
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\EngineerController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
@@ -746,7 +745,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ticketmanagement.ticketservicemanagementv100.dto.LoginRequest;
 import ticketmanagement.ticketservicemanagementv100.dto.LoginResponseDTO;
-import ticketmanagement.ticketservicemanagementv100.model.User;
+import ticketmanagement.ticketservicemanagementv100.entity.*;
 import ticketmanagement.ticketservicemanagementv100.service.LoginService;
 
 import java.util.Optional;
@@ -792,9 +791,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ticketmanagement.ticketservicemanagementv100.dto.TicketCreationDTO;
 import ticketmanagement.ticketservicemanagementv100.dto.TicketUpdateDTO;
-import ticketmanagement.ticketservicemanagementv100.model.Customer;
-import ticketmanagement.ticketservicemanagementv100.model.Engineer;
-import ticketmanagement.ticketservicemanagementv100.model.Ticket;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
@@ -1015,6 +1011,45 @@ public class TicketController {
 
 }
 
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\CategoryDTO.java ---
+package ticketmanagement.ticketservicemanagementv100.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class CategoryDTO {
+
+    private String name;
+    private String description;
+}
+
+
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\CommentDTO.java ---
+package ticketmanagement.ticketservicemanagementv100.dto;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class CommentDTO {
+
+    private String content;
+    private Long ticketId;
+    private Long authorId;
+}
+
+
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\CustomerRegistrationDTO.java ---
 package ticketmanagement.ticketservicemanagementv100.dto;
 
@@ -1034,6 +1069,9 @@ import lombok.Setter;
 public class CustomerRegistrationDTO{
         private String username;
         private String password;
+        private String email;
+        private String phoneNumber;
+        private String address;
 }
 
 
@@ -1068,6 +1106,9 @@ import lombok.Setter;
 public class EngineerRegistrationDTO {
     private String username;
     private String password;
+    private String email;
+    private String specialization;
+    private boolean isDefaultEngineer;
 }
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\EngineerResponseDTO.java ---
@@ -1088,7 +1129,7 @@ public class EngineerResponseDTO {
 }
 
 
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\LoginRequest.java ---
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\LoginRequestDTO.java ---
 package ticketmanagement.ticketservicemanagementv100.dto;
 
 import lombok.AllArgsConstructor;
@@ -1103,7 +1144,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginRequest {
+public class LoginRequestDTO {
     private String username;
     private String password;
 }
@@ -1128,6 +1169,9 @@ public class LoginResponseDTO {
     private String username;
     private String role;
     private String message;
+    private boolean success;
+    private Long id;
+    private String fullName;
 }
 
 
@@ -1161,7 +1205,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import ticketmanagement.ticketservicemanagementv100.model.TicketStatus;
+import ticketmanagement.ticketservicemanagementv100.enums.TicketStatus;
 
 import java.time.LocalDate;
 
@@ -1172,10 +1216,7 @@ import java.time.LocalDate;
 public class TicketUpdateDTO {
     private String description;
     private TicketStatus status;
-    private String customerCommentOnTicket;
-    private String engineerCommentOnTicket;
-    private LocalDate tentativeResolutionDate;
-    private Long engineerId; // Optional reassignment
+    private Long categoryId;
 }
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\entity\Attachment.java ---
@@ -1186,7 +1227,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ticketmanagement.ticketservicemanagementv100.model.Ticket;
 
 import java.time.LocalDateTime;
 
@@ -1235,9 +1275,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ticketmanagement.ticketservicemanagementv100.model.Ticket;
-import ticketmanagement.ticketservicemanagementv100.entity.User;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -1245,7 +1282,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment {
+public class Comment{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -1267,6 +1304,55 @@ public class Comment {
     private LocalDateTime createdAt = LocalDateTime.now();
 }
 
+
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\entity\Customer.java ---
+package ticketmanagement.ticketservicemanagementv100.entity;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "customers")
+@PrimaryKeyJoinColumn(name = "user_id")
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class Customer extends User {
+    private String phoneNumber;
+    private String address;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    private List<Ticket> tickets = new ArrayList<>();
+}
+
+--- File: src\main\java\ticketmanagement\ticketservicemanagementv100\entity\Engineer.java ---
+package ticketmanagement.ticketservicemanagementv100.entity;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrimaryKeyJoinColumn;
+import jakarta.persistence.Table;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "engineers")
+@PrimaryKeyJoinColumn(name = "user_id")
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class Engineer extends User {
+    private String specialization;
+    private boolean isDefaultEngineer = false;
+
+    @OneToMany(mappedBy = "assignedEngineer")
+    private List<Ticket> assignedTickets = new ArrayList<>();
+}
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\entity\Ticket.java ---
 package ticketmanagement.ticketservicemanagementv100.entity;
@@ -1369,13 +1455,10 @@ package ticketmanagement.ticketservicemanagementv100.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -1399,28 +1482,17 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    private String phoneNumber;
+    //private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
 
     @Column(nullable = false)
-    private Boolean isDefaultEngineer = false;
-
-    @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
-
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Ticket> createdTickets;
-
-    @OneToMany(mappedBy = "assignedEngineer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Ticket> assignedTickets;
 }
 
 
@@ -1437,155 +1509,6 @@ package ticketmanagement.ticketservicemanagementv100.enums;
 
 public enum UserRole {
     CUSTOMER, ENGINEER
-}
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\Customer.java ---
-package ticketmanagement.ticketservicemanagementv100.model;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Entity
-@Getter
-@Setter
-@Table(name = "customers")
-@NoArgsConstructor
-public class Customer extends User {
-}
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\Engineer.java ---
-package ticketmanagement.ticketservicemanagementv100.model;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-
-@Getter
-@Setter
-@NoArgsConstructor
-@Entity
-
-@Table(name = "engineers")
-public class Engineer extends User {
-    public Engineer(Long id, String username, String password) {
-        super(id, username, password);
-    }
-
-}
-
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\Ticket.java ---
-package ticketmanagement.ticketservicemanagementv100.model;
-
-import jakarta.persistence.*;
-import lombok.*;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
-
-@Entity
-@Table(name = "tickets")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class Ticket {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    private String description;
-    private LocalDateTime ticketCreateDate;
-    private String customerCommentOnTicket;
-    private String engineerCommentOnTicket;
-    private LocalDate tentativeResolutionDate;
-
-    @Enumerated(EnumType.STRING)
-    private TicketStatus status = TicketStatus.CREATED;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer createdBy;
-
-    @ManyToOne(optional = true)
-    @JoinColumn(name = "engineer_id")
-    private Engineer acknowledgedBy;
-
-    @PrePersist
-    public void prePersist() {
-        this.ticketCreateDate = LocalDateTime.now();
-    }
-
-}
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\TicketStatus.java ---
-package ticketmanagement.ticketservicemanagementv100.model;
-
-public enum TicketStatus {
-    CREATED,
-    ACKNOWLEDGED,
-    IN_PROGRESS,
-    CLOSED
-}
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\User.java ---
-package ticketmanagement.ticketservicemanagementv100.model;
-
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-
-@Getter
-@Setter
-@AllArgsConstructor
-@NoArgsConstructor
-@MappedSuperclass
-public abstract class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // Use IDENTITY for auto-incrementing IDs
-    private Long id;
-
-    @Column(unique = true, nullable = false) // Username must be unique and not null
-    private String username;
-
-    @Column(nullable = false) // Password must not be null
-    private String password;
-
-    @Enumerated(EnumType.STRING) // Store enum as String in DB
-    @Column(nullable = false) // Role must not be null
-    private UserRole role; // New field for user roles
-
-    public User(Long id, String username, String password) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
-    }
-}
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\model\UserRole.java ---
-package ticketmanagement.ticketservicemanagementv100.model;
-
-/**
- * Enum to define user roles within the application.
- */
-public enum UserRole {
-    CUSTOMER,
-    ENGINEER
 }
 
 
@@ -1608,7 +1531,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\repository\CommentRepository.java ---
 package ticketmanagement.ticketservicemanagementv100.repository;
 
-import ticketmanagement.ticketservicemanagementv100.entity.Comment;
+import ticketmanagement.ticketservicemanagementv100.entity.*;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -1625,25 +1548,34 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
 package ticketmanagement.ticketservicemanagementv100.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-import ticketmanagement.ticketservicemanagementv100.model.Customer;
+import ticketmanagement.ticketservicemanagementv100.entity.Customer;
 
 import java.util.Optional;
 
 public interface CustomerRepository extends JpaRepository<Customer, Long> {
     Optional<Customer> findByUsername(String username);
+
+    Optional<Customer> findByEmail(String email);
+
 }
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\repository\EngineerRepository.java ---
 package ticketmanagement.ticketservicemanagementv100.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ticketmanagement.ticketservicemanagementv100.model.Engineer;
+import ticketmanagement.ticketservicemanagementv100.entity.Engineer;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface EngineerRepository extends JpaRepository<Engineer, Long> {
     Optional<Engineer> findByUsername(String username); // New method for finding engineer by username
+
+    Optional<Engineer> findByEmail(String email);
+
+    Optional<Engineer> findByIsDefaultEngineer(boolean isDefault);
+
+    List<Engineer> findByIsDefaultEngineerFalse();
 }
 
 
@@ -1666,55 +1598,37 @@ public interface TicketCategoryRepository extends JpaRepository<TicketCategory, 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\repository\TicketRepository.java ---
 package ticketmanagement.ticketservicemanagementv100.repository;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
 import ticketmanagement.ticketservicemanagementv100.entity.User;
 import ticketmanagement.ticketservicemanagementv100.enums.TicketStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
+
     List<Ticket> findByCustomer(User customer);
+
     List<Ticket> findByAssignedEngineer(User engineer);
+
     List<Ticket> findByAssignedEngineerIsNull();
+
     List<Ticket> findByStatus(TicketStatus status);
+
     List<Ticket> findByCategory_Id(Long categoryId);
-    
-    @Query("SELECT t FROM Ticket t WHERE t.customer.fullName LIKE %:customerName%")
-    List<Ticket> findByCustomerNameContaining(@Param("customerName") String customerName);
-    
-    @Query("SELECT t FROM Ticket t WHERE " +
-           "(:status IS NULL OR t.status = :status) AND " +
-           "(:categoryId IS NULL OR t.category.id = :categoryId) AND " +
-           "(:customerName IS NULL OR t.customer.fullName LIKE %:customerName%)")
-    List<Ticket> findTicketsWithFilters(
-        @Param("status") TicketStatus status,
-        @Param("categoryId") Long categoryId,
-        @Param("customerName") String customerName
-    );
-    
-    @Query("SELECT t FROM Ticket t WHERE t.customer = :customer AND " +
-           "(:status IS NULL OR t.status = :status) AND " +
-           "(:categoryId IS NULL OR t.category.id = :categoryId)")
-    List<Ticket> findCustomerTicketsWithFilters(
-        @Param("customer") User customer,
-        @Param("status") TicketStatus status,
-        @Param("categoryId") Long categoryId
-    );
+
 }
 
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\repository\UserRepository.java ---
 package ticketmanagement.ticketservicemanagementv100.repository;
 
-import ticketmanagement.ticketservicemanagementv100.entity.User;
-import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+import ticketmanagement.ticketservicemanagementv100.entity.User;
+import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 
 import java.util.List;
 import java.util.Optional;
@@ -1722,10 +1636,15 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
+
     Optional<User> findByUsernameAndPassword(String username, String password);
+
     List<User> findByRole(UserRole role);
+
     Optional<User> findByIsDefaultEngineerTrue();
+
     boolean existsByUsername(String username);
+
     boolean existsByEmail(String email);
 }
 
@@ -1806,11 +1725,11 @@ public class AttachmentService {
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\CommentService.java ---
 package ticketmanagement.ticketservicemanagementv100.service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import ticketmanagement.ticketservicemanagementv100.entity.Comment;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
 import ticketmanagement.ticketservicemanagementv100.repository.CommentRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -1819,16 +1738,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CommentService {
     private final CommentRepository commentRepository;
-    
+
     public Comment addComment(Comment comment) {
         comment.setCreatedAt(LocalDateTime.now());
         return commentRepository.save(comment);
     }
-    
+
     public List<Comment> getCommentsByTicket(Ticket ticket) {
         return commentRepository.findByTicketOrderByCreatedAtAsc(ticket);
     }
-    
+
     public Comment findById(Long id) {
         return commentRepository.findById(id).orElse(null);
     }
@@ -1842,8 +1761,8 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ticketmanagement.ticketservicemanagementv100.dto.CustomerRegistrationDTO;
-import ticketmanagement.ticketservicemanagementv100.model.Customer;
-import ticketmanagement.ticketservicemanagementv100.model.UserRole;
+import ticketmanagement.ticketservicemanagementv100.entity.Customer;
+import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
 
 import java.util.List;
@@ -1855,11 +1774,6 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
 
-    /**
-     * Retrieves all Customers.
-     *
-     * @return A list of all Customer objects.
-     */
     public List<Customer> getAllCustomers() {
         return customerRepository.findAll();
     }
@@ -1877,7 +1791,7 @@ public class CustomerService {
     /**
      * Updates an existing Customer.
      *
-     * @param id The ID of the customer to update.
+     * @param id              The ID of the customer to update.
      * @param customerDetails The Customer object containing updated details.
      * @return The updated Customer object.
      * @throws EntityNotFoundException if no customer with the given ID is found.
@@ -1929,8 +1843,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ticketmanagement.ticketservicemanagementv100.dto.EngineerRegistrationDTO;
 import ticketmanagement.ticketservicemanagementv100.dto.EngineerResponseDTO;
-import ticketmanagement.ticketservicemanagementv100.model.Engineer;
-import ticketmanagement.ticketservicemanagementv100.model.UserRole;
+import ticketmanagement.ticketservicemanagementv100.entity.Engineer;
+import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
 
 import java.util.List;
@@ -1988,7 +1902,7 @@ package ticketmanagement.ticketservicemanagementv100.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ticketmanagement.ticketservicemanagementv100.model.User;
+import ticketmanagement.ticketservicemanagementv100.entity.User;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
 
@@ -2158,6 +2072,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -2165,7 +2080,11 @@ public class UserService {
     private final UserRepository userRepository;
     
     public User authenticate(String username, String password) {
-        return userRepository.findByUsernameAndPassword(username, password).orElse(null);
+        Optional<User> optionalUser = userRepository.findByUsernameAndPassword(username, password);
+        if (optionalUser.isPresent()) {
+            return optionalUser.get();
+        }
+        return null;
     }
     
     public User findById(Long id) {

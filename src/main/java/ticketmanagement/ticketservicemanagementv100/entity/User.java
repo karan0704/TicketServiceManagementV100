@@ -2,13 +2,10 @@ package ticketmanagement.ticketservicemanagementv100.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -32,26 +29,15 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    private String phoneNumber;
+    //private String phoneNumber;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserRole role;
 
     @Column(nullable = false)
-    private Boolean isDefaultEngineer = false;
-
-    @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
-
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Ticket> createdTickets;
-
-    @OneToMany(mappedBy = "assignedEngineer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Ticket> assignedTickets;
 }

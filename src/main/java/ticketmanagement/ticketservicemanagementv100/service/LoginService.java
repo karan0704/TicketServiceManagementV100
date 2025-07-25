@@ -2,7 +2,7 @@ package ticketmanagement.ticketservicemanagementv100.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ticketmanagement.ticketservicemanagementv100.model.User;
+import ticketmanagement.ticketservicemanagementv100.entity.User;
 import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
 

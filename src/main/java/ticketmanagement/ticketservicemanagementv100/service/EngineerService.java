@@ -5,8 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ticketmanagement.ticketservicemanagementv100.dto.EngineerRegistrationDTO;
 import ticketmanagement.ticketservicemanagementv100.dto.EngineerResponseDTO;
-import ticketmanagement.ticketservicemanagementv100.model.Engineer;
-import ticketmanagement.ticketservicemanagementv100.model.UserRole;
+import ticketmanagement.ticketservicemanagementv100.entity.Engineer;
+import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
 
 import java.util.List;

@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ticketmanagement.ticketservicemanagementv100.dto.LoginRequest;
 import ticketmanagement.ticketservicemanagementv100.dto.LoginResponseDTO;
-import ticketmanagement.ticketservicemanagementv100.model.User;
+import ticketmanagement.ticketservicemanagementv100.entity.*;
 import ticketmanagement.ticketservicemanagementv100.service.LoginService;
 
 import java.util.Optional;

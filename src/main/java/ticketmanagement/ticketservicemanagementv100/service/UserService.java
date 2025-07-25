@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -15,7 +16,11 @@ public class UserService {
     private final UserRepository userRepository;
     
     public User authenticate(String username, String password) {
-        return userRepository.findByUsernameAndPassword(username, password).orElse(null);
+        Optional<User> optionalUser = userRepository.findByUsernameAndPassword(username, password);
+        if (optionalUser.isPresent()) {
+            return optionalUser.get();
+        }
+        return null;
     }
     
     public User findById(Long id) {

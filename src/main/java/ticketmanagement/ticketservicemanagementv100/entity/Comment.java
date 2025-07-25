@@ -5,9 +5,6 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ticketmanagement.ticketservicemanagementv100.model.Ticket;
-import ticketmanagement.ticketservicemanagementv100.entity.User;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -15,7 +12,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment {
+public class Comment{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

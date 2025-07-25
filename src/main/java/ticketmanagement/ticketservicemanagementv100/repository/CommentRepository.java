@@ -1,6 +1,6 @@
 package ticketmanagement.ticketservicemanagementv100.repository;
 
-import ticketmanagement.ticketservicemanagementv100.entity.Comment;
+import ticketmanagement.ticketservicemanagementv100.entity.*;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
