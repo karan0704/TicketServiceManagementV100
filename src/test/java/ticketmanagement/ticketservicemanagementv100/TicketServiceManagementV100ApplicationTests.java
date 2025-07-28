@@ -9,5 +9,4 @@ class TicketServiceManagementV100ApplicationTests {
     @Test
     void contextLoads() {
     }
-
 }

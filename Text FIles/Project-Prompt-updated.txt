@@ -108,3 +108,16 @@ Logout:             Clear frontend storage, no server-side session management
 | Manage Customers                    | ❌        | ✅        | ✅              |
 | Manage Ticket Categories            | ❌        | ✅        | ✅              |
 | Delete Ticket                       | ❌        | ✅        | ✅              |
+
+frontend/
+├── css/
+│   ├── login.css
+│   └── dashboard.css
+├── js/
+│   ├── login.js
+│   ├── customer_dashboard.js
+│   └── engineer_dashboard.js
+├── index.html
+├── login.html
+├── customer_dashboard.html
+└── engineer_dashboard.html
