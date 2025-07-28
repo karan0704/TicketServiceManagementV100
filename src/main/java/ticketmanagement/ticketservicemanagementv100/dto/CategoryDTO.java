@@ -1,0 +1,18 @@
+package ticketmanagement.ticketservicemanagementv100.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+/**
+ * DTO for ticket categories
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class CategoryDTO {
+    private String name;
+    private String description;
+}
