@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Ticket Management</title>
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <div class="user-info" id="userInfo">
+            <h1>Admin Engineer Dashboard</h1>
+            <p>Loading...</p>
+        </div>
+        <button class="logout-btn" id="logoutBtn">Logout</button>
+    </header>
+
+    <nav class="nav-tabs">
+        <button class="nav-tab active" data-section="tickets">All Tickets</button>
+        <button class="nav-tab" data-section="users">Manage Users</button>
+        <button class="nav-tab" data-section="engineers">Create Engineer</button>
+        <button class="nav-tab" data-section="customers">Create Customer</button>
+        <button class="nav-tab" data-section="categories">Categories</button>
+    </nav>
+
+    <!-- All Tickets Section -->
+    <section id="ticketsSection" class="section active">
+        <h2>All System Tickets</h2>
+        <div class="filter-buttons" style="margin-bottom: 20px;">
+            <button class="btn btn-secondary btn-small" onclick="adminDashboard.loadAllTickets()">All Tickets</button>
+            <button class="btn btn-secondary btn-small" onclick="adminDashboard.loadUnassignedTickets()">Unassigned</button>
+        </div>
+        <div id="ticketsList">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading tickets...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Users Management Section -->
+    <section id="usersSection" class="section">
+        <h2>User Management</h2>
+        <button class="btn btn-primary" onclick="adminDashboard.loadAllUsers()" style="margin-bottom: 20px;">Load All Users</button>
+        <div id="usersList">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading users...</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Create Engineer Section -->
+    <section id="engineersSection" class="section">
+        <h2>Create Engineer Account</h2>
+        <form id="createEngineerForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="engineerUsername">Username *</label>
+                    <input type="text" id="engineerUsername" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="engineerPassword">Password *</label>
+                    <input type="password" id="engineerPassword" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="engineerFullName">Full Name *</label>
+                    <input type="text" id="engineerFullName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="engineerEmail">Email *</label>
+                    <input type="email" id="engineerEmail" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="engineerPhone">Phone Number</label>
+                    <input type="text" id="engineerPhone" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="engineerSpecialization">Specialization</label>
+                    <input type="text" id="engineerSpecialization" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="isDefaultEngineer">
+                    Make Default Engineer (Admin)
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create Engineer</button>
+        </form>
+    </section>
+
+    <!-- Create Customer Section -->
+    <section id="customersSection" class="section">
+        <h2>Create Customer Account</h2>
+        <form id="createCustomerForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="customerUsername">Username *</label>
+                    <input type="text" id="customerUsername" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerPassword">Password *</label>
+                    <input type="password" id="customerPassword" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="customerFullName">Full Name *</label>
+                    <input type="text" id="customerFullName" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="customerEmail">Email *</label>
+                    <input type="email" id="customerEmail" class="form-control" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="customerPhone">Phone Number</label>
+                    <input type="text" id="customerPhone" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="customerCompanyName">Company Name</label>
+                    <input type="text" id="customerCompanyName" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="customerAddress">Address</label>
+                <textarea id="customerAddress" class="form-control" rows="2"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Create Customer</button>
+        </form>
+    </section>
+
+    <!-- Categories Section -->
+    <section id="categoriesSection" class="section">
+        <h2>Category Management</h2>
+
+        <div style="margin-bottom: 30px;">
+            <h3>Create New Category</h3>
+            <form id="createCategoryForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="categoryName">Category Name *</label>
+                        <input type="text" id="categoryName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="categoryDescription">Description</label>
+                        <input type="text" id="categoryDescription" class="form-control">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Category</button>
+            </form>
+        </div>
+
+        <h3>All Categories</h3>
+        <button class="btn btn-secondary" onclick="adminDashboard.loadCategories()" style="margin-bottom: 20px;">Refresh Categories</button>
+        <div id="categoriesList">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Loading categories...</p>
+            </div>
+        </div>
+    </section>
+</div>
+
+<script src="js/admin_dashboard.js"></script>
+</body>
+</html>

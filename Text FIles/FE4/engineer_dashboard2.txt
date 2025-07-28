@@ -1,0 +1,15 @@
+
+
+// Add to EngineerDashboard class - same methods as customer dashboard
+async viewAttachments(ticketId) {
+    try {
+        const response = await this.apiCall(`/api/engineer/tickets/${ticketId}/attachments`);
+        const attachments = await response.json();
+        this.showAttachmentsModal(ticketId, attachments);
+    } catch (error) {
+        this.showMessage('Error loading attachments: ' + error.message, 'error');
+    }
+}
+
+// Update displayTickets method to include attachment column
+// ... (similar to customer dashboard updates)

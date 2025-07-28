@@ -5,14 +5,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ticketmanagement.ticketservicemanagementv100.dto.TicketUpdateDTO;
 import ticketmanagement.ticketservicemanagementv100.dto.UserRegistrationDTO;
+import ticketmanagement.ticketservicemanagementv100.entity.Attachment;
 import ticketmanagement.ticketservicemanagementv100.entity.Comment;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
 import ticketmanagement.ticketservicemanagementv100.entity.User;
 import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
+import ticketmanagement.ticketservicemanagementv100.service.AttachmentService;
+import ticketmanagement.ticketservicemanagementv100.service.CommentService;
 import ticketmanagement.ticketservicemanagementv100.service.TicketService;
 import ticketmanagement.ticketservicemanagementv100.service.UserService;
 import ticketmanagement.ticketservicemanagementv100.util.SecurityUtil;
-import ticketmanagement.ticketservicemanagementv100.service.CommentService;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class EngineerController {
     private final TicketService ticketService;
     private final UserService userService;
     private final CommentService commentService;
+    private final AttachmentService attachmentService;
 
     @GetMapping("/tickets/unassigned")
     public ResponseEntity<List<Ticket>> getUnassignedTickets(
@@ -152,4 +155,20 @@ public class EngineerController {
         List<User> customers = userService.findByRole(UserRole.CUSTOMER);
         return ResponseEntity.ok(customers);
     }
+
+    @GetMapping("/tickets/{ticketId}/attachments")
+    public ResponseEntity<List<Attachment>> getTicketAttachments(
+            @PathVariable Long ticketId,
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestHeader("X-User-Role") String role,
+            @RequestHeader("X-Username") String username) {
+
+        SecurityUtil.validateRole(role, "ENGINEER");
+        SecurityUtil.validateAndGetUser(userId, role, username);
+
+        Ticket ticket = ticketService.findById(ticketId);
+        List<Attachment> attachments = attachmentService.getAttachmentsByTicket(ticket);
+        return ResponseEntity.ok(attachments);
+    }
+
 }

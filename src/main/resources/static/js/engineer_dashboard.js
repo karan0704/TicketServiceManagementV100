@@ -158,54 +158,58 @@ class EngineerDashboard {
         }
     }
 
-    displayTickets(tickets, title, showAcknowledgeButton) {
+    async displayTickets(tickets) {
         const ticketsList = document.getElementById('ticketsList');
 
         if (tickets.length === 0) {
-            ticketsList.innerHTML = `<div class="message info">No ${title.toLowerCase()} found.</div>`;
+            ticketsList.innerHTML = '<div class="message info">No tickets found. Create your first ticket!</div>';
             return;
         }
 
         let html = `
-            <h3>${title}</h3>
-            <div class="table-container">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Title</th>
-                            <th>Customer</th>
-                            <th>Description</th>
-                            <th>Status</th>
-                            <th>Category</th>
-                            <th>Created</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Category</th>
+                        <th>Engineer</th>
+                        <th>Attachments</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
 
-        tickets.forEach(ticket => {
+        // Process each ticket and load its attachments
+        for (const ticket of tickets) {
+            const attachments = await this.loadTicketAttachments(ticket.id);
+
             html += `
-                <tr>
-                    <td>#${ticket.id}</td>
-                    <td>${ticket.title}</td>
-                    <td>${ticket.customer ? ticket.customer.fullName : 'N/A'}</td>
-                    <td>${this.truncateText(ticket.description, 50)}</td>
-                    <td><span class="status-badge status-${ticket.status.toLowerCase().replace('_', '-')}">${ticket.status}</span></td>
-                    <td>${ticket.category ? ticket.category.name : 'N/A'}</td>
-                    <td>${this.formatDate(ticket.createdAt)}</td>
-                    <td>
-                        ${showAcknowledgeButton ?
-                            `<button class="btn btn-success btn-small" onclick="engineerDashboard.acknowledgeTicket(${ticket.id})">Acknowledge</button>` :
-                            `<button class="btn btn-primary btn-small" onclick="engineerDashboard.showUpdateTicketModal(${ticket.id})">Update</button>`}
-                        <button class="btn btn-secondary btn-small" onclick="engineerDashboard.viewComments(${ticket.id})">Comments</button>
-                        <button class="btn btn-success btn-small" onclick="engineerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button>
-                        <button class="btn btn-danger btn-small" onclick="engineerDashboard.deleteTicket(${ticket.id})">Delete</button>
-                    </td>
-                </tr>
-            `;
-        });
+            <tr>
+                <td>#${ticket.id}</td>
+                <td>${ticket.title}</td>
+                <td>${this.truncateText(ticket.description, 50)}</td>
+                <td><span class="status-badge status-${ticket.status.toLowerCase().replace('_', '-')}">${ticket.status}</span></td>
+                <td>${ticket.category ? ticket.category.name : 'N/A'}</td>
+                <td>${ticket.assignedEngineer ? ticket.assignedEngineer.fullName : 'Unassigned'}</td>
+                <td>
+                    <span class="attachment-count">${attachments.length} file(s)</span>
+                    ${attachments.length > 0 ? `<button class="btn btn-small btn-secondary" onclick="customerDashboard.viewAttachments(${ticket.id})">View Files</button>` : ''}
+                </td>
+                <td>${this.formatDate(ticket.createdAt)}</td>
+                <td>
+                    <button class="btn btn-primary btn-small" onclick="customerDashboard.viewComments(${ticket.id})">Comments</button>
+                    <button class="btn btn-secondary btn-small" onclick="customerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button>
+                    <button class="btn btn-success btn-small" onclick="customerDashboard.showAddAttachmentModal(${ticket.id})">Attach File</button>
+                </td>
+            </tr>
+        `;
+        }
 
         html += '</tbody></table></div>';
         ticketsList.innerHTML = html;
@@ -257,6 +261,16 @@ class EngineerDashboard {
 
         html += '</tbody></table></div>';
         assignedTicketsList.innerHTML = html;
+    }
+
+    async viewAttachments(ticketId) {
+        try {
+            const response = await this.apiCall(`/api/engineer/tickets/${ticketId}/attachments`);
+            const attachments = await response.json();
+            this.showAttachmentsModal(ticketId, attachments);
+        } catch (error) {
+            this.showMessage('Error loading attachments: ' + error.message, 'error');
+        }
     }
 
     displayCustomers(customers) {
@@ -550,7 +564,7 @@ class EngineerDashboard {
             'X-Username': this.currentUser.username
         };
 
-        const config = { method, headers };
+        const config = {method, headers};
         if (body) config.body = JSON.stringify(body);
 
         return fetch(url, config);

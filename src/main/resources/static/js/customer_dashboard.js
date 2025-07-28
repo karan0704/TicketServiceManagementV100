@@ -146,7 +146,7 @@ class CustomerDashboard {
         }
     }
 
-    displayTickets(tickets) {
+    async displayTickets(tickets) {
         const ticketsList = document.getElementById('ticketsList');
 
         if (tickets.length === 0) {
@@ -155,44 +155,157 @@ class CustomerDashboard {
         }
 
         let html = `
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Category</th>
+                        <th>Engineer</th>
+                        <th>Attachments</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+        // Process each ticket and load its attachments
+        for (const ticket of tickets) {
+            const attachments = await this.loadTicketAttachments(ticket.id);
+
+            html += `
+            <tr>
+                <td>#${ticket.id}</td>
+                <td>${ticket.title}</td>
+                <td>${this.truncateText(ticket.description, 50)}</td>
+                <td><span class="status-badge status-${ticket.status.toLowerCase().replace('_', '-')}">${ticket.status}</span></td>
+                <td>${ticket.category ? ticket.category.name : 'N/A'}</td>
+                <td>${ticket.assignedEngineer ? ticket.assignedEngineer.fullName : 'Unassigned'}</td>
+                <td>
+                    <span class="attachment-count">${attachments.length} file(s)</span>
+                    <span class="attachment-count">${attachments.length} file(s)</span>
+                    ${attachments.length > 0 ? `<button class="btn btn-small btn-secondary" onclick="customerDashboard.viewAttachments(${ticket.id})">View Files</button>` : ''}
+                </td>
+                <td>${this.formatDate(ticket.createdAt)}</td>
+                <td>
+                    <button class="btn btn-primary btn-small" onclick="customerDashboard.viewComments(${ticket.id})">Comments</button>
+                    <button class="btn btn-secondary btn-small" onclick="customerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button>
+                    <button class="btn btn-success btn-small" onclick="customerDashboard.showAddAttachmentModal(${ticket.id})">Attach File</button>
+                </td>
+            </tr>
+        `;
+        }
+
+        html += '</tbody></table></div>';
+        ticketsList.innerHTML = html;
+    }
+
+    async viewAttachments(ticketId) {
+        try {
+            const attachments = await this.loadTicketAttachments(ticketId);
+            this.showAttachmentsModal(ticketId, attachments);
+        } catch (error) {
+            this.showMessage('Error loading attachments: ' + error.message, 'error');
+        }
+    }
+
+    showAttachmentsModal(ticketId, attachments) {
+        let attachmentsHtml = `
+        <div class="modal" id="attachmentsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Attachments for Ticket #${ticketId}</h3>
+                    <button class="close" onclick="customerDashboard.closeModal('attachmentsModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+    `;
+
+        if (attachments.length === 0) {
+            attachmentsHtml += '<div class="message info">No attachments found for this ticket.</div>';
+        } else {
+            attachmentsHtml += `
             <div class="table-container">
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Title</th>
-                            <th>Description</th>
-                            <th>Status</th>
-                            <th>Category</th>
-                            <th>Engineer</th>
-                            <th>Created</th>
+                            <th>File Name</th>
+                            <th>Size</th>
+                            <th>Uploaded By</th>
+                            <th>Comment</th>
+                            <th>Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
         `;
 
-        tickets.forEach(ticket => {
-            html += `
+            attachments.forEach(attachment => {
+                attachmentsHtml += `
                 <tr>
-                    <td>#${ticket.id}</td>
-                    <td>${ticket.title}</td>
-                    <td>${this.truncateText(ticket.description, 50)}</td>
-                    <td><span class="status-badge status-${ticket.status.toLowerCase().replace('_', '-')}">${ticket.status}</span></td>
-                    <td>${ticket.category ? ticket.category.name : 'N/A'}</td>
-                    <td>${ticket.assignedEngineer ? ticket.assignedEngineer.fullName : 'Unassigned'}</td>
-                    <td>${this.formatDate(ticket.createdAt)}</td>
+                    <td>${attachment.fileName}</td>
+                    <td>${this.formatFileSize(attachment.fileSize)}</td>
+                    <td>${attachment.uploadedBy.fullName}</td>
+                    <td>${attachment.comment || 'No comment'}</td>
+                    <td>${this.formatDateTime(attachment.uploadedAt)}</td>
                     <td>
-                        <button class="btn btn-primary btn-small" onclick="customerDashboard.viewComments(${ticket.id})">Comments</button>
-                        <button class="btn btn-secondary btn-small" onclick="customerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button>
-                        <button class="btn btn-success btn-small" onclick="customerDashboard.showAddAttachmentModal(${ticket.id})">Attach File</button>
+                        <button class="btn btn-primary btn-small" onclick="customerDashboard.downloadAttachment(${attachment.id}, '${attachment.fileName}')">Download</button>
                     </td>
                 </tr>
             `;
-        });
+            });
 
-        html += '</tbody></table></div>';
-        ticketsList.innerHTML = html;
+            attachmentsHtml += '</tbody></table></div>';
+        }
+
+        attachmentsHtml += `
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.body.insertAdjacentHTML('beforeend', attachmentsHtml);
+        document.getElementById('attachmentsModal').style.display = 'block';
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    async downloadAttachment(attachmentId, fileName) {
+        try {
+            const response = await fetch(`/api/customer/attachments/${attachmentId}/download`, {
+                method: 'GET',
+                headers: {
+                    'X-User-ID': this.currentUser.id,
+                    'X-User-Role': this.currentUser.role,
+                    'X-Username': this.currentUser.username
+                }
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } else {
+                throw new Error('Failed to download file');
+            }
+        } catch (error) {
+            this.showMessage('Error downloading file: ' + error.message, 'error');
+        }
     }
 
     async handleCreateTicket(event) {
@@ -392,6 +505,19 @@ class CustomerDashboard {
         }
     }
 
+    async loadTicketAttachments(ticketId) {
+        try {
+            const response = await this.apiCall(`/api/customer/tickets/${ticketId}/attachments`);
+            if (response.ok) {
+                return await response.json();
+            }
+            return [];
+        } catch (error) {
+            console.error('Error loading attachments:', error);
+            return [];
+        }
+    }
+
     loadProfileData() {
         document.getElementById('profileFullName').value = this.currentUser.fullName || '';
         document.getElementById('profileEmail').value = this.currentUser.email || '';
@@ -416,7 +542,7 @@ class CustomerDashboard {
 
             if (response.ok) {
                 // Update localStorage
-                this.currentUser = { ...this.currentUser, ...profileData };
+                this.currentUser = {...this.currentUser, ...profileData};
                 localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
 
                 this.showMessage('Profile updated successfully!', 'success');
@@ -438,7 +564,7 @@ class CustomerDashboard {
             'X-Username': this.currentUser.username
         };
 
-        const config = { method, headers };
+        const config = {method, headers};
         if (body) config.body = JSON.stringify(body);
 
         return fetch(url, config);
