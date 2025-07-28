@@ -24,16 +24,20 @@ public class AttachmentService {
     private final String uploadDir = "uploads/";
 
     public Attachment saveAttachment(MultipartFile file, Ticket ticket, String comment, User uploadedBy) throws IOException {
-        File directory = new File(uploadDir);
+        // Create uploads directory if it doesn't exist
+        File directory = new File("uploads/");
         if (!directory.exists()) {
             directory.mkdirs();
         }
 
+        // Generate unique filename
         String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-        Path filePath = Paths.get(uploadDir + fileName);
+        Path filePath = Paths.get("uploads/" + fileName);
 
+        // Save file to disk
         Files.write(filePath, file.getBytes());
 
+        // Create attachment entity
         Attachment attachment = new Attachment();
         attachment.setFileName(file.getOriginalFilename());
         attachment.setFilePath(filePath.toString());
@@ -46,6 +50,7 @@ public class AttachmentService {
 
         return attachmentRepository.save(attachment);
     }
+
 
     public List<Attachment> getAttachmentsByTicket(Ticket ticket) {
         return attachmentRepository.findByTicket(ticket);

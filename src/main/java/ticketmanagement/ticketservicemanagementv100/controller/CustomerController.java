@@ -52,6 +52,32 @@ public class CustomerController {
         List<Ticket> tickets = ticketService.getTicketsForUser(customer);
         return ResponseEntity.ok(tickets);
     }
+    @PostMapping("/tickets/{ticketId}/attachments")
+    public ResponseEntity<Attachment> uploadAttachment(
+            @PathVariable Long ticketId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "comment", required = false) String comment,
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestHeader("X-User-Role") String role,
+            @RequestHeader("X-Username") String username) {
+
+        SecurityUtil.validateRole(role, "CUSTOMER");
+        User customer = SecurityUtil.validateAndGetUser(userId, role, username);
+
+        // Verify ticket belongs to customer
+        Ticket ticket = ticketService.findById(ticketId);
+        if (!ticket.getCustomer().getId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        try {
+            Attachment attachment = attachmentService.saveAttachment(file, ticket, comment, customer);
+            return ResponseEntity.ok(attachment);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
     @PostMapping("/tickets/{ticketId}/comments")
     public ResponseEntity<Comment> addComment(
