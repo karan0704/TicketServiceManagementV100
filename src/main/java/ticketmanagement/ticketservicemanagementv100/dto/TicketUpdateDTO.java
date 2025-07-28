@@ -16,4 +16,8 @@ public class TicketUpdateDTO {
     private String description;
     private TicketStatus status;
     private Long categoryId;
+    private Long engineerId;
+    private LocalDate tentativeResolutionDate;
+    private String customerCommentOnTicket;
+    private String engineerCommentOnTicket;
 }

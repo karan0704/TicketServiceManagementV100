@@ -8,10 +8,10 @@ import org.springframework.web.bind.annotation.*;
 import ticketmanagement.ticketservicemanagementv100.dto.TicketCreationDTO;
 import ticketmanagement.ticketservicemanagementv100.dto.TicketUpdateDTO;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
-import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
-import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
+import ticketmanagement.ticketservicemanagementv100.entity.User;
 import ticketmanagement.ticketservicemanagementv100.repository.TicketRepository;
 import ticketmanagement.ticketservicemanagementv100.service.TicketService;
+import ticketmanagement.ticketservicemanagementv100.service.UserService;
 
 import java.util.List;
 
@@ -28,9 +28,8 @@ import java.util.List;
 public class TicketController {
 
     private final TicketService ticketService; // Inject the service
-    private final CustomerRepository customerRepo;
-    private final EngineerRepository engineerRepo;
-    private final TicketRepository ticketRepo;
+  //  private final TicketRepository ticketRepo;
+    private final UserService userService;
 
     /**
      * Creates a new Ticket using a TicketCreationDTO.
@@ -54,8 +53,10 @@ public class TicketController {
             return ResponseEntity.badRequest().body(null);
         }
 
-        Customer customer = customerRepo.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+        User customer = userService.findByUsername(username);
+        if (customer == null) {
+            throw new EntityNotFoundException("Customer not found");
+        }
 
         Ticket savedTicket = ticketService.createTicket(
                 customer.getId(),
@@ -108,18 +109,18 @@ public class TicketController {
                     .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
 
             if (dto.getEngineerId() != null) {
-                Engineer engineer = engineerRepo.findById(dto.getEngineerId())
-                        .orElseThrow(() -> new EntityNotFoundException("Engineer not found"));
-                ticket.setAcknowledgedBy(engineer);
+                User engineer = userService.findById(dto.getEngineerId());
+                if (engineer == null) {
+                    throw new EntityNotFoundException("Engineer not found");
+                }
+                ticket.setAssignedEngineer(engineer);
             }
 
             ticket.setDescription(dto.getDescription());
             ticket.setStatus(dto.getStatus());
             ticket.setTentativeResolutionDate(dto.getTentativeResolutionDate());
-            ticket.setCustomerCommentOnTicket(dto.getCustomerCommentOnTicket());
-            ticket.setEngineerCommentOnTicket(dto.getEngineerCommentOnTicket());
 
-            Ticket updated = ticketRepo.save(ticket);
+            Ticket updated = ticketService.updateTicket(ticket);
             return ResponseEntity.ok(updated);
 
         } catch (EntityNotFoundException e) {

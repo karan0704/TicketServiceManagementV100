@@ -1,3 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.3</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+    <groupId>ticket-management</groupId>
+    <artifactId>TicketServiceManagementV100</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <name>TicketServiceManagementV100</name>
+    <description>TicketServiceManagementV100</description>
+    <url/>
+    <licenses>
+        <license/>
+    </licenses>
+    <developers>
+        <developer/>
+    </developers>
+    <scm>
+        <connection/>
+        <developerConnection/>
+        <tag/>
+        <url/>
+    </scm>
+    <properties>
+        <java.version>21</java.version>
+    </properties>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
 
 
 --- File: .mvn\wrapper\maven-wrapper.properties ---
@@ -311,416 +388,6 @@ public class AuthController {
 }
 
 
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\CustomerController.java ---
-package ticketmanagement.ticketservicemanagementv100.controller;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import ticketmanagement.ticketservicemanagementv100.entity.*;
-import ticketmanagement.ticketservicemanagementv100.enums.TicketStatus;
-import ticketmanagement.ticketservicemanagementv100.service.*;
-
-import jakarta.servlet.http.HttpSession;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-@RestController
-@RequestMapping("/api/customer")
-@RequiredArgsConstructor
-@CrossOrigin(origins = "*")
-public class CustomerController {
-    private final TicketService ticketService;
-    private final CommentService commentService;
-    private final AttachmentService attachmentService;
-    private final UserService userService;
-    private final TicketCategoryService categoryService;
-
-    @PostMapping("/tickets")
-    public ResponseEntity<Map<String, Object>> createTicket(@RequestBody Ticket ticket, HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            ticket.setCustomer(currentUser);
-            Ticket createdTicket = ticketService.createTicket(ticket);
-            response.put("success", true);
-            response.put("ticket", createdTicket);
-            response.put("message", "Ticket created successfully");
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error creating ticket: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @GetMapping("/tickets")
-    public ResponseEntity<Map<String, Object>> getMyTickets(HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            List<Ticket> tickets = ticketService.getTicketsForUser(currentUser);
-            response.put("success", true);
-            response.put("tickets", tickets);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error fetching tickets: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @GetMapping("/tickets/search")
-    public ResponseEntity<Map<String, Object>> searchMyTickets(
-            @RequestParam(required = false) TicketStatus status,
-            @RequestParam(required = false) Long categoryId,
-            HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            List<Ticket> tickets = ticketService.searchTickets(status, categoryId, null, currentUser);
-            response.put("success", true);
-            response.put("tickets", tickets);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error searching tickets: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @PostMapping("/tickets/{ticketId}/comments")
-    public ResponseEntity<Map<String, Object>> addComment(@PathVariable Long ticketId, @RequestBody Comment comment, HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            Ticket ticket = ticketService.findById(ticketId);
-            if (ticket == null || !ticket.getCustomer().getId().equals(currentUser.getId())) {
-                response.put("success", false);
-                response.put("message", "Ticket not found or access denied");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
-
-            comment.setTicket(ticket);
-            comment.setAuthor(currentUser);
-            Comment savedComment = commentService.addComment(comment);
-            response.put("success", true);
-            response.put("comment", savedComment);
-            response.put("message", "Comment added successfully");
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error adding comment: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @PostMapping("/tickets/{ticketId}/attachments")
-    public ResponseEntity<Map<String, Object>> uploadAttachment(
-            @PathVariable Long ticketId,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(required = false) String comment,
-            HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            Ticket ticket = ticketService.findById(ticketId);
-            if (ticket == null || !ticket.getCustomer().getId().equals(currentUser.getId())) {
-                response.put("success", false);
-                response.put("message", "Ticket not found or access denied");
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
-
-            Attachment attachment = attachmentService.saveAttachment(file, ticket, comment, currentUser);
-            response.put("success", true);
-            response.put("attachment", attachment);
-            response.put("message", "File uploaded successfully");
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
-        } catch (IOException e) {
-            response.put("success", false);
-            response.put("message", "Error uploading file: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @GetMapping("/categories")
-    public ResponseEntity<Map<String, Object>> getCategories() {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            List<TicketCategory> categories = categoryService.getAllCategories();
-            response.put("success", true);
-            response.put("categories", categories);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error fetching categories: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @PutMapping("/profile")
-    public ResponseEntity<Map<String, Object>> updateProfile(@RequestBody User updatedUser, HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            currentUser.setFullName(updatedUser.getFullName());
-            currentUser.setEmail(updatedUser.getEmail());
-            currentUser.setPhoneNumber(updatedUser.getPhoneNumber());
-
-            User savedUser = userService.updateUser(currentUser);
-            session.setAttribute("currentUser", savedUser);
-            response.put("success", true);
-            response.put("user", savedUser);
-            response.put("message", "Profile updated successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error updating profile: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-}
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\EngineerController.java ---
-package ticketmanagement.ticketservicemanagementv100.controller;
-
-import jakarta.servlet.http.HttpSession;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
-import ticketmanagement.ticketservicemanagementv100.entity.User;
-import ticketmanagement.ticketservicemanagementv100.enums.TicketStatus;
-import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
-import ticketmanagement.ticketservicemanagementv100.service.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-@RestController
-@RequestMapping("/api/engineer")
-@RequiredArgsConstructor
-@CrossOrigin(origins = "*")
-public class EngineerController {
-    private final TicketService ticketService;
-    private final CommentService commentService;
-    private final AttachmentService attachmentService;
-    private final UserService userService;
-    private final TicketCategoryService categoryService;
-
-    @GetMapping("/tickets")
-    public ResponseEntity<Map<String, Object>> getAllTickets(HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            List<Ticket> tickets = ticketService.getTicketsForUser(currentUser);
-            response.put("success", true);
-            response.put("tickets", tickets);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error fetching tickets: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @GetMapping("/tickets/unassigned")
-    public ResponseEntity<Map<String, Object>> getUnassignedTickets() {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            List<Ticket> tickets = ticketService.getUnassignedTickets();
-            response.put("success", true);
-            response.put("tickets", tickets);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error fetching unassigned tickets: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @PostMapping("/tickets/{ticketId}/acknowledge")
-    public ResponseEntity<Map<String, Object>> acknowledgeTicket(@PathVariable Long ticketId, HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            Ticket ticket = ticketService.acknowledgeTicket(ticketId, currentUser);
-            if (ticket != null) {
-                response.put("success", true);
-                response.put("ticket", ticket);
-                response.put("message", "Ticket acknowledged successfully");
-                return ResponseEntity.ok(response);
-            }
-            response.put("success", false);
-            response.put("message", "Unable to acknowledge ticket");
-            return ResponseEntity.badRequest().body(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error acknowledging ticket: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @PutMapping("/tickets/{ticketId}")
-    public ResponseEntity<Map<String, Object>> updateTicket(@PathVariable Long ticketId, @RequestBody Ticket updatedTicket, HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            Ticket ticket = ticketService.findById(ticketId);
-            if (ticket == null) {
-                response.put("success", false);
-                response.put("message", "Ticket not found");
-                return ResponseEntity.badRequest().body(response);
-            }
-
-            // Update allowed fields
-            ticket.setStatus(updatedTicket.getStatus());
-            ticket.setDescription(updatedTicket.getDescription());
-            ticket.setTentativeResolutionDate(updatedTicket.getTentativeResolutionDate());
-            if (updatedTicket.getAssignedEngineer() != null) {
-                ticket.setAssignedEngineer(updatedTicket.getAssignedEngineer());
-            }
-
-            Ticket savedTicket = ticketService.updateTicket(ticket);
-            response.put("success", true);
-            response.put("ticket", savedTicket);
-            response.put("message", "Ticket updated successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error updating ticket: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @DeleteMapping("/tickets/{ticketId}")
-    public ResponseEntity<Map<String, Object>> deleteTicket(@PathVariable Long ticketId) {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            ticketService.deleteTicket(ticketId);
-            response.put("success", true);
-            response.put("message", "Ticket deleted successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error deleting ticket: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @GetMapping("/tickets/search")
-    public ResponseEntity<Map<String, Object>> searchTickets(
-            @RequestParam(required = false) TicketStatus status,
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String customerName,
-            HttpSession session) {
-        Map<String, Object> response = new HashMap<>();
-        User currentUser = (User) session.getAttribute("currentUser");
-
-        if (currentUser == null) {
-            response.put("success", false);
-            response.put("message", "Not authenticated");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-
-        try {
-            List<Ticket> tickets = ticketService.searchTickets(status, categoryId, customerName, currentUser);
-            response.put("success", true);
-            response.put("tickets", tickets);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error searching tickets: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-
-    @GetMapping("/engineers")
-    public ResponseEntity<Map<String, Object>> getAllEngineers() {
-        Map<String, Object> response = new HashMap<>();
-        try {
-            List<User> engineers = userService.findByRole(UserRole.ENGINEER);
-            response.put("success", true);
-            response.put("engineers", engineers);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "Error fetching engineers: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-    }
-}
-
-
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\HomeController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
 
@@ -736,51 +403,6 @@ public class HomeController {
     }
 }
 
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\LoginController.java ---
-package ticketmanagement.ticketservicemanagementv100.controller;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import ticketmanagement.ticketservicemanagementv100.dto.LoginRequest;
-import ticketmanagement.ticketservicemanagementv100.dto.LoginResponseDTO;
-import ticketmanagement.ticketservicemanagementv100.entity.*;
-import ticketmanagement.ticketservicemanagementv100.service.LoginService;
-
-import java.util.Optional;
-
-@RestController
-@RequestMapping("/login")
-@RequiredArgsConstructor
-public class LoginController {
-
-    private final LoginService loginService;
-
-    @PostMapping
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody LoginRequest loginRequest) {
-        Optional<User> optionalUser = loginService.authenticate(loginRequest.getUsername(), loginRequest.getPassword());
-
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            LoginResponseDTO response = new LoginResponseDTO(
-                    user.getUsername(),
-                    user.getRole().name(),
-                    "Login successful"
-            );
-            return ResponseEntity.ok(response);
-        }
-
-        // If authentication fails
-        LoginResponseDTO errorResponse = new LoginResponseDTO(
-                loginRequest.getUsername(),
-                "UNKNOWN",
-                "Invalid username or password"
-        );
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
-    }
-}
-
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\controller\TicketController.java ---
 package ticketmanagement.ticketservicemanagementv100.controller;
 
@@ -792,10 +414,10 @@ import org.springframework.web.bind.annotation.*;
 import ticketmanagement.ticketservicemanagementv100.dto.TicketCreationDTO;
 import ticketmanagement.ticketservicemanagementv100.dto.TicketUpdateDTO;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
-import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
-import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
+import ticketmanagement.ticketservicemanagementv100.entity.User;
 import ticketmanagement.ticketservicemanagementv100.repository.TicketRepository;
 import ticketmanagement.ticketservicemanagementv100.service.TicketService;
+import ticketmanagement.ticketservicemanagementv100.service.UserService;
 
 import java.util.List;
 
@@ -812,9 +434,8 @@ import java.util.List;
 public class TicketController {
 
     private final TicketService ticketService; // Inject the service
-    private final CustomerRepository customerRepo;
-    private final EngineerRepository engineerRepo;
-    private final TicketRepository ticketRepo;
+  //  private final TicketRepository ticketRepo;
+    private final UserService userService;
 
     /**
      * Creates a new Ticket using a TicketCreationDTO.
@@ -838,8 +459,10 @@ public class TicketController {
             return ResponseEntity.badRequest().body(null);
         }
 
-        Customer customer = customerRepo.findByUsername(username)
-                .orElseThrow(() -> new EntityNotFoundException("Customer not found"));
+        User customer = userService.findByUsername(username);
+        if (customer == null) {
+            throw new EntityNotFoundException("Customer not found");
+        }
 
         Ticket savedTicket = ticketService.createTicket(
                 customer.getId(),
@@ -892,18 +515,18 @@ public class TicketController {
                     .orElseThrow(() -> new EntityNotFoundException("Ticket not found"));
 
             if (dto.getEngineerId() != null) {
-                Engineer engineer = engineerRepo.findById(dto.getEngineerId())
-                        .orElseThrow(() -> new EntityNotFoundException("Engineer not found"));
-                ticket.setAcknowledgedBy(engineer);
+                User engineer = userService.findById(dto.getEngineerId());
+                if (engineer == null) {
+                    throw new EntityNotFoundException("Engineer not found");
+                }
+                ticket.setAssignedEngineer(engineer);
             }
 
             ticket.setDescription(dto.getDescription());
             ticket.setStatus(dto.getStatus());
             ticket.setTentativeResolutionDate(dto.getTentativeResolutionDate());
-            ticket.setCustomerCommentOnTicket(dto.getCustomerCommentOnTicket());
-            ticket.setEngineerCommentOnTicket(dto.getEngineerCommentOnTicket());
 
-            Ticket updated = ticketRepo.save(ticket);
+            Ticket updated = ticketService.updateTicket(ticket);
             return ResponseEntity.ok(updated);
 
         } catch (EntityNotFoundException e) {
@@ -1030,126 +653,6 @@ public class CategoryDTO {
 }
 
 
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\CommentDTO.java ---
-package ticketmanagement.ticketservicemanagementv100.dto;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class CommentDTO {
-
-    private String content;
-    private Long ticketId;
-    private Long authorId;
-}
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\CustomerRegistrationDTO.java ---
-package ticketmanagement.ticketservicemanagementv100.dto;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-/**
- * Data Transfer Object (DTO) for registering a new Customer.
- * This DTO is used when an Engineer creates a new Customer account.
- */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class CustomerRegistrationDTO{
-        private String username;
-        private String password;
-        private String email;
-        private String phoneNumber;
-        private String address;
-}
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\CustomerResponseDTO.java ---
-package ticketmanagement.ticketservicemanagementv100.dto;
-
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-@Data
-@AllArgsConstructor
-public class CustomerResponseDTO {
-    private Long id;
-    private String username;
-}
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\EngineerRegistrationDTO.java ---
-package ticketmanagement.ticketservicemanagementv100.dto;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-/**
- * DTO for creating a new Engineer.
- */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class EngineerRegistrationDTO {
-    private String username;
-    private String password;
-    private String email;
-    private String specialization;
-    private boolean isDefaultEngineer;
-}
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\EngineerResponseDTO.java ---
-package ticketmanagement.ticketservicemanagementv100.dto;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class EngineerResponseDTO {
-    private Long id;
-    private String username;
-}
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\LoginRequestDTO.java ---
-package ticketmanagement.ticketservicemanagementv100.dto;
-
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-/**
- * Data Transfer Object (DTO) for user login requests.
- */
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-public class LoginRequestDTO {
-    private String username;
-    private String password;
-}
-
-
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\dto\LoginResponseDTO.java ---
 package ticketmanagement.ticketservicemanagementv100.dto;
 
@@ -1217,6 +720,10 @@ public class TicketUpdateDTO {
     private String description;
     private TicketStatus status;
     private Long categoryId;
+    private Long engineerId;
+    private LocalDate tentativeResolutionDate;
+    private String customerCommentOnTicket;
+    private String engineerCommentOnTicket;
 }
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\entity\Attachment.java ---
@@ -1282,7 +789,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment{
+public class Comment {  // ✅ Make sure class name matches filename
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -1302,56 +809,6 @@ public class Comment{
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
-}
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\entity\Customer.java ---
-package ticketmanagement.ticketservicemanagementv100.entity;
-
-import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
-import java.util.ArrayList;
-import java.util.List;
-
-@Entity
-@Table(name = "customers")
-@PrimaryKeyJoinColumn(name = "user_id")
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class Customer extends User {
-    private String phoneNumber;
-    private String address;
-
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
-    private List<Ticket> tickets = new ArrayList<>();
-}
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\entity\Engineer.java ---
-package ticketmanagement.ticketservicemanagementv100.entity;
-
-import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrimaryKeyJoinColumn;
-import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-
-import java.util.ArrayList;
-import java.util.List;
-
-@Entity
-@Table(name = "engineers")
-@PrimaryKeyJoinColumn(name = "user_id")
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class Engineer extends User {
-    private String specialization;
-    private boolean isDefaultEngineer = false;
-
-    @OneToMany(mappedBy = "assignedEngineer")
-    private List<Ticket> assignedTickets = new ArrayList<>();
 }
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\entity\Ticket.java ---
@@ -1455,10 +912,14 @@ package ticketmanagement.ticketservicemanagementv100.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -1482,7 +943,11 @@ public class User {
     @Column(nullable = false)
     private String email;
 
-    //private String phoneNumber;
+    // ADD THESE MISSING FIELDS:
+    private String phoneNumber;                    // ✅ ADD
+    private String address;                        // ✅ ADD (for customers)
+    private String specialization;                 // ✅ ADD (for engineers)
+    private Boolean isDefaultEngineer = false;     // ✅ ADD
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -1493,8 +958,16 @@ public class User {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
-}
 
+    // ADD THESE RELATIONSHIPS:
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Ticket> createdTickets = new ArrayList<>();    // ✅ ADD
+
+    @OneToMany(mappedBy = "assignedEngineer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Ticket> assignedTickets = new ArrayList<>();   // ✅ ADD
+}
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\enums\TicketStatus.java ---
 package ticketmanagement.ticketservicemanagementv100.enums;
@@ -1531,7 +1004,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\repository\CommentRepository.java ---
 package ticketmanagement.ticketservicemanagementv100.repository;
 
-import ticketmanagement.ticketservicemanagementv100.entity.*;
+import ticketmanagement.ticketservicemanagementv100.entity.Comment;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -1541,41 +1014,6 @@ import java.util.List;
 @Repository
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByTicketOrderByCreatedAtAsc(Ticket ticket);
-}
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\repository\CustomerRepository.java ---
-package ticketmanagement.ticketservicemanagementv100.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import ticketmanagement.ticketservicemanagementv100.entity.Customer;
-
-import java.util.Optional;
-
-public interface CustomerRepository extends JpaRepository<Customer, Long> {
-    Optional<Customer> findByUsername(String username);
-
-    Optional<Customer> findByEmail(String email);
-
-}
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\repository\EngineerRepository.java ---
-package ticketmanagement.ticketservicemanagementv100.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import ticketmanagement.ticketservicemanagementv100.entity.Engineer;
-
-import java.util.List;
-import java.util.Optional;
-
-public interface EngineerRepository extends JpaRepository<Engineer, Long> {
-    Optional<Engineer> findByUsername(String username); // New method for finding engineer by username
-
-    Optional<Engineer> findByEmail(String email);
-
-    Optional<Engineer> findByIsDefaultEngineer(boolean isDefault);
-
-    List<Engineer> findByIsDefaultEngineerFalse();
 }
 
 
@@ -1599,6 +1037,8 @@ public interface TicketCategoryRepository extends JpaRepository<TicketCategory, 
 package ticketmanagement.ticketservicemanagementv100.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
 import ticketmanagement.ticketservicemanagementv100.entity.User;
@@ -1617,8 +1057,28 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
 
     List<Ticket> findByStatus(TicketStatus status);
 
-    List<Ticket> findByCategory_Id(Long categoryId);
+    List<Ticket> findByCategoryId(Long categoryId);
 
+    // ADD THESE MISSING METHODS:
+    @Query("SELECT t FROM Ticket t WHERE t.customer = :user AND " +
+            "(:status IS NULL OR t.status = :status) AND " +
+            "(:categoryId IS NULL OR t.category.id = :categoryId)")
+    List<Ticket> findCustomerTicketsWithFilters(@Param("user") User user,
+                                                @Param("status") TicketStatus status,
+                                                @Param("categoryId") Long categoryId);   // ✅ ADD
+
+    @Query("SELECT t FROM Ticket t WHERE " +
+            "(:status IS NULL OR t.status = :status) AND " +
+            "(:categoryId IS NULL OR t.category.id = :categoryId) AND " +
+            "(:customerName IS NULL OR LOWER(t.customer.fullName) LIKE LOWER(CONCAT('%', :customerName, '%')))")
+    List<Ticket> findTicketsWithFilters(@Param("status") TicketStatus status,
+                                        @Param("categoryId") Long categoryId,
+                                        @Param("customerName") String customerName);   // ✅ ADD
+
+    // ADD CONVENIENCE METHODS:
+    List<Ticket> findByCreatedById(Long customerId);        // ✅ ADD
+
+    List<Ticket> findByAcknowledgedById(Long engineerId);   // ✅ ADD
 }
 
 
@@ -1646,8 +1106,11 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUsername(String username);
 
     boolean existsByEmail(String email);
-}
 
+    List<User> findByIsDefaultEngineerFalse();              // ✅ ADD
+
+    Optional<User> findByEmail(String email);               // ✅ ADD
+}
 
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\AttachmentService.java ---
 package ticketmanagement.ticketservicemanagementv100.service;
@@ -1753,185 +1216,6 @@ public class CommentService {
     }
 }
 
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\CustomerService.java ---
-package ticketmanagement.ticketservicemanagementv100.service;
-
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import ticketmanagement.ticketservicemanagementv100.dto.CustomerRegistrationDTO;
-import ticketmanagement.ticketservicemanagementv100.entity.Customer;
-import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
-import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
-
-import java.util.List;
-import java.util.Optional;
-
-@Service
-@RequiredArgsConstructor
-public class CustomerService {
-
-    private final CustomerRepository customerRepository;
-
-    public List<Customer> getAllCustomers() {
-        return customerRepository.findAll();
-    }
-
-    /**
-     * Retrieves a Customer by their ID.
-     *
-     * @param id The ID of the customer to retrieve.
-     * @return An Optional containing the Customer if found, or empty if not.
-     */
-    public Optional<Customer> getCustomerById(Long id) {
-        return customerRepository.findById(id);
-    }
-
-    /**
-     * Updates an existing Customer.
-     *
-     * @param id              The ID of the customer to update.
-     * @param customerDetails The Customer object containing updated details.
-     * @return The updated Customer object.
-     * @throws EntityNotFoundException if no customer with the given ID is found.
-     */
-    public Customer updateCustomer(Long id, Customer customerDetails) {
-        return customerRepository.findById(id)
-                .map(customer -> {
-                    customer.setUsername(customerDetails.getUsername());
-                    customer.setPassword(customerDetails.getPassword());
-                    return customerRepository.save(customer);
-                })
-                .orElseThrow(() -> new EntityNotFoundException("Customer not found with id " + id));
-    }
-
-    /**
-     * Deletes a Customer by their ID.
-     *
-     * @param id The ID of the customer to delete.
-     * @throws EntityNotFoundException if no customer with the given ID is found.
-     */
-    public void deleteCustomer(Long id) {
-        if (!customerRepository.existsById(id)) {
-            throw new EntityNotFoundException("Customer not found with id " + id);
-        }
-        customerRepository.deleteById(id);
-    }
-
-    public Customer registerCustomerFromDTO(CustomerRegistrationDTO dto) {
-        if (dto.getUsername() == null || dto.getPassword() == null ||
-                dto.getUsername().isBlank() || dto.getPassword().isBlank()) {
-            throw new IllegalArgumentException("Username and password must not be blank.");
-        }
-
-        Customer customer = new Customer();
-        customer.setUsername(dto.getUsername());
-        customer.setPassword(dto.getPassword()); // ❗ plain text for now
-        customer.setRole(UserRole.CUSTOMER);
-
-        return customerRepository.save(customer);
-    }
-
-}
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\EngineerService.java ---
-package ticketmanagement.ticketservicemanagementv100.service;
-
-import jakarta.persistence.EntityNotFoundException;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import ticketmanagement.ticketservicemanagementv100.dto.EngineerRegistrationDTO;
-import ticketmanagement.ticketservicemanagementv100.dto.EngineerResponseDTO;
-import ticketmanagement.ticketservicemanagementv100.entity.Engineer;
-import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
-import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
-@Service
-@RequiredArgsConstructor
-public class EngineerService {
-
-    private final EngineerRepository engineerRepository;
-
-    public EngineerResponseDTO createEngineer(EngineerRegistrationDTO dto) {
-        Engineer engineer = new Engineer();
-        engineer.setUsername(dto.getUsername());
-        engineer.setPassword(dto.getPassword()); // TODO: hash password later
-        engineer.setRole(UserRole.ENGINEER);
-        Engineer saved = engineerRepository.save(engineer);
-        return new EngineerResponseDTO(saved.getId(), saved.getUsername());
-    }
-
-    public List<EngineerResponseDTO> getAllEngineers() {
-        return engineerRepository.findAll()
-                .stream()
-                .map(e -> new EngineerResponseDTO(e.getId(), e.getUsername()))
-                .collect(Collectors.toList());
-    }
-
-    public Optional<EngineerResponseDTO> getEngineerById(Long id) {
-        return engineerRepository.findById(id)
-                .map(e -> new EngineerResponseDTO(e.getId(), e.getUsername()));
-    }
-
-    public Engineer updateEngineer(Long id, Engineer input) {
-        return engineerRepository.findById(id)
-                .map(engineer -> {
-                    engineer.setUsername(input.getUsername());
-                    engineer.setPassword(input.getPassword()); // TODO: hash password later
-                    return engineerRepository.save(engineer);
-                })
-                .orElseThrow(() -> new EntityNotFoundException("Engineer not found with id " + id));
-    }
-
-    public void deleteEngineer(Long id) {
-        if (!engineerRepository.existsById(id)) {
-            throw new EntityNotFoundException("Engineer not found with id " + id);
-        }
-        engineerRepository.deleteById(id);
-    }
-}
-
-
---- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\LoginService.java ---
-package ticketmanagement.ticketservicemanagementv100.service;
-
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import ticketmanagement.ticketservicemanagementv100.entity.User;
-import ticketmanagement.ticketservicemanagementv100.repository.CustomerRepository;
-import ticketmanagement.ticketservicemanagementv100.repository.EngineerRepository;
-
-import java.util.Optional;
-
-@Service
-@RequiredArgsConstructor
-public class LoginService {
-
-    private final CustomerRepository customerRepository;
-    private final EngineerRepository engineerRepository;
-
-    public Optional<User> authenticate(String username, String password) {
-        // First try to find in customers
-        Optional<User> customer = customerRepository.findByUsername(username)
-                .map(c -> (User) c)
-                .filter(user -> user.getPassword().equals(password));
-
-        if (customer.isPresent()) {
-            return customer;
-        }
-
-        // If not found in customers, try engineers
-        return engineerRepository.findByUsername(username)
-                .map(e -> (User) e)
-                .filter(user -> user.getPassword().equals(password));
-    }
-}
-
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\TicketCategoryService.java ---
 package ticketmanagement.ticketservicemanagementv100.service;
 
@@ -1979,16 +1263,18 @@ public class TicketCategoryService {
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\TicketService.java ---
 package ticketmanagement.ticketservicemanagementv100.service;
 
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import ticketmanagement.ticketservicemanagementv100.entity.Ticket;
 import ticketmanagement.ticketservicemanagementv100.entity.User;
 import ticketmanagement.ticketservicemanagementv100.enums.TicketStatus;
 import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.TicketRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1996,23 +1282,53 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class TicketService {
     private final TicketRepository ticketRepository;
-    
+    private final UserService userService;
+
     public Ticket createTicket(Ticket ticket) {
         ticket.setStatus(TicketStatus.CREATED);
         ticket.setCreatedAt(LocalDateTime.now());
         ticket.setUpdatedAt(LocalDateTime.now());
         return ticketRepository.save(ticket);
     }
-    
+
+    // ADD THIS METHOD for TicketController
+    public Ticket createTicket(Long customerId, String description, Long engineerId) {
+        User customer = userService.findById(customerId);
+        if (customer == null || customer.getRole() != UserRole.CUSTOMER) {
+            throw new EntityNotFoundException("Customer not found");
+        }
+
+        Ticket ticket = new Ticket();
+        ticket.setTitle("Ticket from " + customer.getFullName()); // Auto-generate title
+        ticket.setDescription(description);
+        ticket.setCustomer(customer);
+        ticket.setStatus(TicketStatus.CREATED);
+
+        if (engineerId != null) {
+            User engineer = userService.findById(engineerId);
+            if (engineer != null && engineer.getRole() == UserRole.ENGINEER) {
+                ticket.setAssignedEngineer(engineer);
+                ticket.setStatus(TicketStatus.ACKNOWLEDGED);
+            }
+        }
+
+        return createTicket(ticket);
+    }
+
     public Ticket updateTicket(Ticket ticket) {
         ticket.setUpdatedAt(LocalDateTime.now());
         return ticketRepository.save(ticket);
     }
-    
+
     public Ticket findById(Long id) {
         return ticketRepository.findById(id).orElse(null);
     }
-    
+
+    public Optional<Ticket> getTicketById(Long id) {
+        return ticketRepository.findById(id);
+    }
+
+
     public List<Ticket> getTicketsForUser(User user) {
         if (user.getRole() == UserRole.CUSTOMER) {
             return ticketRepository.findByCustomer(user);
@@ -2020,19 +1336,19 @@ public class TicketService {
             // For engineers, return both assigned and unassigned tickets
             List<Ticket> assignedTickets = ticketRepository.findByAssignedEngineer(user);
             List<Ticket> unassignedTickets = ticketRepository.findByAssignedEngineerIsNull();
-            return Stream.concat(assignedTickets.stream(), unassignedTickets.stream())
-                        .collect(Collectors.toList());
+            return Stream.concat(assignedTickets.stream(), unassignedTickets.stream()).collect(Collectors.toList());
         }
     }
-    
+
     public List<Ticket> getUnassignedTickets() {
         return ticketRepository.findByAssignedEngineerIsNull();
     }
-    
+
     public List<Ticket> getAssignedTickets(User engineer) {
         return ticketRepository.findByAssignedEngineer(engineer);
     }
-    
+
+    /*
     public Ticket acknowledgeTicket(Long ticketId, User engineer) {
         Ticket ticket = findById(ticketId);
         if (ticket != null && ticket.getAssignedEngineer() == null) {
@@ -2041,8 +1357,26 @@ public class TicketService {
             return updateTicket(ticket);
         }
         return null;
+    }*/
+    public Ticket acknowledgeTicket(Long ticketId, String engineerUsername) {
+        User engineer = userService.findByUsername(engineerUsername);
+        if (engineer != null && engineer.getRole() == UserRole.ENGINEER) {
+            return acknowledgeTicket(ticketId, engineer);
+        }
+        return null;
     }
-    
+
+    public Ticket acknowledgeTicketByUser(Long ticketId, User engineer) {
+        Ticket ticket = findById(ticketId);
+        if (ticket != null && ticket.getAssignedEngineer() == null) {
+            ticket.setAssignedEngineer(engineer);
+            ticket.setStatus(TicketStatus.ACKNOWLEDGED);
+            return updateTicket(ticket);
+        }
+        return null;
+    }
+
+
     public List<Ticket> searchTickets(TicketStatus status, Long categoryId, String customerName, User currentUser) {
         if (currentUser.getRole() == UserRole.CUSTOMER) {
             return ticketRepository.findCustomerTicketsWithFilters(currentUser, status, categoryId);
@@ -2050,11 +1384,11 @@ public class TicketService {
             return ticketRepository.findTicketsWithFilters(status, categoryId, customerName);
         }
     }
-    
+
     public void deleteTicket(Long id) {
         ticketRepository.deleteById(id);
     }
-    
+
     public List<Ticket> getAllTickets() {
         return ticketRepository.findAll();
     }
@@ -2064,11 +1398,11 @@ public class TicketService {
 --- File: src\main\java\ticketmanagement\ticketservicemanagementv100\service\UserService.java ---
 package ticketmanagement.ticketservicemanagementv100.service;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import ticketmanagement.ticketservicemanagementv100.entity.User;
 import ticketmanagement.ticketservicemanagementv100.enums.UserRole;
 import ticketmanagement.ticketservicemanagementv100.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -2078,7 +1412,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-    
+
     public User authenticate(String username, String password) {
         Optional<User> optionalUser = userRepository.findByUsernameAndPassword(username, password);
         if (optionalUser.isPresent()) {
@@ -2086,23 +1420,27 @@ public class UserService {
         }
         return null;
     }
-    
+
     public User findById(Long id) {
         return userRepository.findById(id).orElse(null);
     }
-    
+
     public User findByUsername(String username) {
         return userRepository.findByUsername(username).orElse(null);
     }
-    
+
     public List<User> findByRole(UserRole role) {
         return userRepository.findByRole(role);
     }
-    
+
     public User findDefaultEngineer() {
         return userRepository.findByIsDefaultEngineerTrue().orElse(null);
     }
-    
+
+    public boolean isDefaultEngineer(User user) {
+        return user != null && Boolean.TRUE.equals(user.getIsDefaultEngineer());
+    }
+
     public User createUser(User user) {
         if (userRepository.existsByUsername(user.getUsername())) {
             throw new RuntimeException("Username already exists");
@@ -2114,23 +1452,20 @@ public class UserService {
         user.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(user);
     }
-    
+
     public User updateUser(User user) {
         user.setUpdatedAt(LocalDateTime.now());
         return userRepository.save(user);
     }
-    
+
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
-    
+
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
-    
-    public boolean isDefaultEngineer(User user) {
-        return user != null && user.getIsDefaultEngineer();
-    }
+
 }
 
 

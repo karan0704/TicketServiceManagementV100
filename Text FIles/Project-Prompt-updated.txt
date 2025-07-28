@@ -1,0 +1,110 @@
+## 👥 User Roles & Capabilities
+
+| Role      | Capabilities                                                                 |
+|-----------|-------------------------------------------------------------------------------|
+Customer -  Create own tickets, View their own tickets, Add comments to own tickets, Add attachments with comments,
+            Update own profile, change his name, company name, Filter/search all own tickets
+
+Engineer -  Create/delete Customer accounts,
+            View own assigned + unassigned tickets, Assign themselves to unassigned tickets (acknowledge),
+            Update ticket details (status, tentative date, add comments to ticket),
+            Reassign tickets, Upload attachments with comments, Delete tickets,
+            Filter/search all Customers tickets, Set ticket categories,
+
+
+Admin Engineer (`default_engineer`)
+        -   All engineer capabilities, Create/delete Customer accounts, Create/update/delete Engineer accounts,
+            Set ticket categories, change own username/password
+
+> ⚙ **Note**: Only the default engineer (`default_engineer`) has **admin privileges**.
+
+---
+
+## 📦 Core Functionalities
+
+### 🔐 User Authentication
+🔐 Authentication Approach
+Simple Login/Logout System
+Login:              POST /api/auth/login with username/password
+Response:           Returns user details with role information
+Frontend Storage:   Store user data in localStorage/sessionStorage
+API Protection:     Each API call requires user credentials or user ID in headers
+Logout:             Clear frontend storage, no server-side session management
+
+- Role: `CUSTOMER` or `ENGINEER`
+- Login via username/password
+- Simple role-based access check, no Spring Security
+
+---
+
+🧾 Ticket Management
+
+🧑‍💼 Customers
+- Create Ticket: Provide description (uneditable afterward)
+- Comment on Ticket: Can add comments below the description (not update it)
+- Add Attachments: File upload + optional comment
+- View Own Tickets
+- Update Profile: Change his name, company name
+
+🧑‍🔧 Engineers
+- **View All Tickets**:
+  - Tickets assigned to them
+  - Tickets unassigned (can **assign themselves** by acknowledging)
+- **Acknowledge Ticket**:
+  - Self-assign to an unassigned ticket
+- **Update Ticket**:
+  - Update status: `CREATED`, `ACKNOWLEDGED`, `IN_PROGRESS`, `CLOSED`
+  - Add `tentativeResolutionDate`
+  - Add engineer comments
+  - Reassign ticket to another engineer
+- **Upload Attachments**: With optional comments
+- **Delete Ticket**
+- **Filter/Search Tickets** by:
+  - Status
+  - Ticket category
+  - Customer name
+- **Update Own Profile**
+
+#### 🛠 Admin Engineer (`default_engineer`)
+- All engineer capabilities
+- **Register Customer accounts**
+- **Manage Engineer accounts** (Create/Update/Delete)
+- **Manage Customers** (Create/Update/Delete)
+- **Manage Ticket Categories**
+
+---
+
+## 🧩 Technologies Used
+
+| Layer     | Technology               |
+|-----------|--------------------------|
+| Backend   | Java, Spring Boot        |
+| ORM       | JPA (Hibernate)          |
+| DB        | MySQL                    |
+| Frontend  | HTML, CSS, JavaScript    |
+| Build     | Maven                    |
+| Utility   | Lombok                   |
+
+---
+
+
+## ✅ Final Role Capabilities Table
+
+| Capability                          | Customer | Engineer | Admin Engineer |
+|-------------------------------------|----------|----------|----------------|
+| Login                               | ✅        | ✅        | ✅              |
+| Create Ticket                       | ✅        | ❌        | ❌              |
+| View Own Tickets                    | ✅        | ✅        | ✅              |
+| View Assigned + Unassigned Tickets  | ❌        | ✅        | ✅              |
+| Acknowledge Ticket (Self-Assign)    | ❌        | ✅        | ✅              |
+| Update Ticket (Status, Date)        | ❌        | ✅        | ✅              |
+| Update Ticket Description           | ❌        | ✅        | ✅              |
+| Add Comments (Threaded)             | ✅        | ✅        | ✅              |
+| Upload Attachment + Comment         | ✅        | ✅        | ✅              |
+| Filter/Search Tickets               | ✅        | ✅        | ✅              |
+| Update Own Profile                  | ✅        | ✅        | ✅              |
+| Register Customer                   | ❌        | ✅        | ✅              |
+| Manage Engineer Accounts            | ❌        | ❌        | ✅              |
+| Manage Customers                    | ❌        | ✅        | ✅              |
+| Manage Ticket Categories            | ❌        | ✅        | ✅              |
+| Delete Ticket                       | ❌        | ✅        | ✅              |
