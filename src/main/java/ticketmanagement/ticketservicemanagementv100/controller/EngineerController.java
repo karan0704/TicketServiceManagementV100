@@ -1,8 +1,10 @@
 package ticketmanagement.ticketservicemanagementv100.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import ticketmanagement.ticketservicemanagementv100.dto.TicketUpdateDTO;
 import ticketmanagement.ticketservicemanagementv100.dto.UserRegistrationDTO;
 import ticketmanagement.ticketservicemanagementv100.entity.Attachment;
@@ -16,6 +18,7 @@ import ticketmanagement.ticketservicemanagementv100.service.TicketService;
 import ticketmanagement.ticketservicemanagementv100.service.UserService;
 import ticketmanagement.ticketservicemanagementv100.util.SecurityUtil;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -154,6 +157,31 @@ public class EngineerController {
 
         List<User> customers = userService.findByRole(UserRole.CUSTOMER);
         return ResponseEntity.ok(customers);
+    }
+
+    @PostMapping("/tickets/{ticketId}/attachments")
+    public ResponseEntity<Attachment> uploadAttachment(
+            @PathVariable Long ticketId,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "comment", required = false) String comment,
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestHeader("X-User-Role") String role,
+            @RequestHeader("X-Username") String username) {
+
+        SecurityUtil.validateRole(role, "ENGINEER");
+        User engineer = SecurityUtil.validateAndGetUser(userId, role, username);
+
+        Ticket ticket = ticketService.findById(ticketId);
+        if (ticket == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            Attachment attachment = attachmentService.saveAttachment(file, ticket, comment, engineer);
+            return ResponseEntity.ok(attachment);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping("/tickets/{ticketId}/attachments")

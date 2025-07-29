@@ -2,6 +2,7 @@
 class CustomerDashboard {
     constructor() {
         this.currentUser = null;
+        this.sortDirection = 'asc';
         this.initializeDashboard();
     }
 
@@ -146,6 +147,54 @@ class CustomerDashboard {
         }
     }
 
+// 🔥 ADD: Sorting functionality for customers
+    sortTickets(sortBy) {
+        // Get current tickets from the table
+        const table = document.querySelector('.table tbody');
+        if (!table) return;
+
+        const rows = Array.from(table.rows);
+
+        // Toggle sort direction
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+
+        rows.sort((a, b) => {
+            let aValue, bValue;
+
+            switch (sortBy) {
+                case 'id':
+                    aValue = parseInt(a.cells[0].textContent.replace('#', ''));
+                    bValue = parseInt(b.cells[0].textContent.replace('#', ''));
+                    break;
+                case 'title':
+                    aValue = a.cells[1].textContent.toLowerCase();
+                    bValue = b.cells[1].textContent.toLowerCase();
+                    break;
+                case 'status':
+                    aValue = a.cells[3].textContent.toLowerCase();
+                    bValue = b.cells[3].textContent.toLowerCase();
+                    break;
+                case 'createdAt':
+                    aValue = new Date(a.cells[7].textContent);
+                    bValue = new Date(b.cells[7].textContent);
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (this.sortDirection === 'asc') {
+                return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+            } else {
+                return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+            }
+        });
+
+        // Clear table and re-append sorted rows
+        table.innerHTML = '';
+        rows.forEach(row => table.appendChild(row));
+    }
+
+// 🔧 UPDATE: displayTickets method with sorting headers
     async displayTickets(tickets) {
         const ticketsList = document.getElementById('ticketsList');
 
@@ -159,14 +208,14 @@ class CustomerDashboard {
             <table class="table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Title</th>
+                        <th onclick="customerDashboard.sortTickets('id')" style="cursor: pointer;">ID ↕</th>
+                        <th onclick="customerDashboard.sortTickets('title')" style="cursor: pointer;">Title ↕</th>
                         <th>Description</th>
-                        <th>Status</th>
+                        <th onclick="customerDashboard.sortTickets('status')" style="cursor: pointer;">Status ↕</th>
                         <th>Category</th>
                         <th>Engineer</th>
                         <th>Attachments</th>
-                        <th>Created</th>
+                        <th onclick="customerDashboard.sortTickets('createdAt')" style="cursor: pointer;">Created ↕</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -187,13 +236,12 @@ class CustomerDashboard {
                 <td>${ticket.assignedEngineer ? ticket.assignedEngineer.fullName : 'Unassigned'}</td>
                 <td>
                     <span class="attachment-count">${attachments.length} file(s)</span>
-                    <span class="attachment-count">${attachments.length} file(s)</span>
-                    ${attachments.length > 0 ? `<button class="btn btn-small btn-secondary" onclick="customerDashboard.viewAttachments(${ticket.id})">View Files</button>` : ''}
+                    ${attachments.length > 0 ? `<br><button class="btn btn-small btn-secondary" onclick="customerDashboard.viewAttachments(${ticket.id})">View Files</button>` : ''}
                 </td>
                 <td>${this.formatDate(ticket.createdAt)}</td>
                 <td>
-                    <button class="btn btn-primary btn-small" onclick="customerDashboard.viewComments(${ticket.id})">Comments</button>
-                    <button class="btn btn-secondary btn-small" onclick="customerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button>
+                    <button class="btn btn-primary btn-small" onclick="customerDashboard.viewComments(${ticket.id})">Comments</button><br>
+                    <button class="btn btn-secondary btn-small" onclick="customerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button><br>
                     <button class="btn btn-success btn-small" onclick="customerDashboard.showAddAttachmentModal(${ticket.id})">Attach File</button>
                 </td>
             </tr>
@@ -203,6 +251,7 @@ class CustomerDashboard {
         html += '</tbody></table></div>';
         ticketsList.innerHTML = html;
     }
+
 
     async viewAttachments(ticketId) {
         try {

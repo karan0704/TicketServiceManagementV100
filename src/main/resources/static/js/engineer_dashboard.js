@@ -2,6 +2,7 @@
 class EngineerDashboard {
     constructor() {
         this.currentUser = null;
+        this.sortDirection = 'asc';
         this.initializeDashboard();
     }
 
@@ -109,8 +110,150 @@ class EngineerDashboard {
         });
     }
 
+// 🔥 ADD: Missing handleTicketFilter method
+    handleTicketFilter(filterType) {
+        switch (filterType) {
+            case 'all':
+                this.loadAllTickets();
+                break;
+            case 'created':
+                this.loadTicketsByStatus('CREATED');
+                break;
+            case 'acknowledged':
+                this.loadTicketsByStatus('ACKNOWLEDGED');
+                break;
+            case 'in-progress':
+                this.loadTicketsByStatus('IN_PROGRESS');
+                break;
+            case 'closed':
+                this.loadTicketsByStatus('CLOSED');
+                break;
+            default:
+                this.loadUnassignedTickets();
+        }
+    }
+
+// 🔥 ADD: Load all tickets method
+    async loadAllTickets() {
+        try {
+            this.showLoading('ticketsList');
+
+            const response = await fetch('/api/public/tickets');
+            const tickets = await response.json();
+
+            this.displayTickets(tickets, 'All Tickets', false);
+        } catch (error) {
+            this.showMessage('Error loading all tickets: ' + error.message, 'error');
+        } finally {
+            this.hideLoading('ticketsList');
+        }
+    }
+
+// 🔥 ADD: Load tickets by status
+    async loadTicketsByStatus(status) {
+        try {
+            this.showLoading('ticketsList');
+
+            const response = await fetch(`/api/public/tickets`);
+            const allTickets = await response.json();
+
+            // Filter tickets by status
+            const filteredTickets = allTickets.filter(ticket => ticket.status === status);
+
+            this.displayTickets(filteredTickets, `${status} Tickets`, status === 'CREATED');
+        } catch (error) {
+            this.showMessage(`Error loading ${status} tickets: ` + error.message, 'error');
+        } finally {
+            this.hideLoading('ticketsList');
+        }
+    }
+
+// 🔥 ADD: Add attachment functionality for engineers
+    showAddAttachmentModal(ticketId) {
+        const modalHtml = `
+        <div class="modal" id="addAttachmentModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 class="modal-title">Add Attachment to Ticket #${ticketId}</h3>
+                    <button class="close" onclick="engineerDashboard.closeModal('addAttachmentModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAttachmentForm">
+                        <div class="form-group">
+                            <label>Select File:</label>
+                            <input type="file" class="form-control" id="attachmentFile" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Comment (optional):</label>
+                            <textarea class="form-control" id="attachmentComment" rows="3" placeholder="Optional comment about this file..."></textarea>
+                        </div>
+                        <div style="text-align: right;">
+                            <button type="button" class="btn btn-secondary" onclick="engineerDashboard.closeModal('addAttachmentModal')">Cancel</button>
+                            <button type="button" class="btn btn-primary" onclick="engineerDashboard.uploadAttachment(${ticketId})">Upload</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        document.getElementById('addAttachmentModal').style.display = 'block';
+    }
+
+// 🔥 ADD: Upload attachment for engineers
+    async uploadAttachment(ticketId) {
+        const fileInput = document.getElementById('attachmentFile');
+        const comment = document.getElementById('attachmentComment').value.trim();
+
+        if (!fileInput.files[0]) {
+            this.showMessage('Please select a file', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('comment', comment);
+
+        try {
+            const response = await fetch(`/api/engineer/tickets/${ticketId}/attachments`, {
+                method: 'POST',
+                headers: {
+                    'X-User-ID': this.currentUser.id,
+                    'X-User-Role': this.currentUser.role,
+                    'X-Username': this.currentUser.username
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                this.showMessage('Attachment uploaded successfully!', 'success');
+                this.closeModal('addAttachmentModal');
+                this.loadUnassignedTickets(); // Refresh current view
+            } else {
+                throw new Error('Failed to upload attachment');
+            }
+        } catch (error) {
+            this.showMessage('Error uploading attachment: ' + error.message, 'error');
+        }
+    }
+
     async loadInitialData() {
         await this.loadUnassignedTickets();
+    }
+
+    // 🔥 ADD: Missing method to load ticket attachments
+    async loadTicketAttachments(ticketId) {
+        try {
+            const response = await this.apiCall(`/api/engineer/tickets/${ticketId}/attachments`);
+            if (response.ok) {
+                return await response.json();
+            }
+            return [];
+        } catch (error) {
+            console.error('Error loading attachments:', error);
+            return [];
+        }
     }
 
     async loadUnassignedTickets() {
@@ -158,27 +301,30 @@ class EngineerDashboard {
         }
     }
 
-    async displayTickets(tickets) {
+    // 🔧 FIXED: Corrected method references and added proper actions
+    // 🔧 UPDATED: displayTickets method with attachment button
+    async displayTickets(tickets, title, showAcknowledgeButton = false) {
         const ticketsList = document.getElementById('ticketsList');
 
         if (tickets.length === 0) {
-            ticketsList.innerHTML = '<div class="message info">No tickets found. Create your first ticket!</div>';
+            ticketsList.innerHTML = `<div class="message info">No ${title.toLowerCase()} found.</div>`;
             return;
         }
 
         let html = `
+        <h3>${title}</h3>
         <div class="table-container">
             <table class="table">
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Title</th>
+                        <th onclick="engineerDashboard.sortTickets('id')" style="cursor: pointer;">ID ↕</th>
+                        <th onclick="engineerDashboard.sortTickets('title')" style="cursor: pointer;">Title ↕</th>
+                        <th onclick="engineerDashboard.sortTickets('customer')" style="cursor: pointer;">Customer ↕</th>
                         <th>Description</th>
-                        <th>Status</th>
+                        <th onclick="engineerDashboard.sortTickets('status')" style="cursor: pointer;">Status ↕</th>
                         <th>Category</th>
-                        <th>Engineer</th>
                         <th>Attachments</th>
-                        <th>Created</th>
+                        <th onclick="engineerDashboard.sortTickets('createdAt')" style="cursor: pointer;">Created ↕</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -193,19 +339,23 @@ class EngineerDashboard {
             <tr>
                 <td>#${ticket.id}</td>
                 <td>${ticket.title}</td>
+                <td>${ticket.customer ? ticket.customer.fullName : 'N/A'}</td>
                 <td>${this.truncateText(ticket.description, 50)}</td>
                 <td><span class="status-badge status-${ticket.status.toLowerCase().replace('_', '-')}">${ticket.status}</span></td>
                 <td>${ticket.category ? ticket.category.name : 'N/A'}</td>
-                <td>${ticket.assignedEngineer ? ticket.assignedEngineer.fullName : 'Unassigned'}</td>
                 <td>
                     <span class="attachment-count">${attachments.length} file(s)</span>
-                    ${attachments.length > 0 ? `<button class="btn btn-small btn-secondary" onclick="customerDashboard.viewAttachments(${ticket.id})">View Files</button>` : ''}
+                    ${attachments.length > 0 ? `<br><button class="btn btn-small btn-secondary" onclick="engineerDashboard.viewAttachments(${ticket.id})">View Files</button>` : ''}
                 </td>
                 <td>${this.formatDate(ticket.createdAt)}</td>
                 <td>
-                    <button class="btn btn-primary btn-small" onclick="customerDashboard.viewComments(${ticket.id})">Comments</button>
-                    <button class="btn btn-secondary btn-small" onclick="customerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button>
-                    <button class="btn btn-success btn-small" onclick="customerDashboard.showAddAttachmentModal(${ticket.id})">Attach File</button>
+                    ${showAcknowledgeButton ?
+                `<button class="btn btn-success btn-small" onclick="engineerDashboard.acknowledgeTicket(${ticket.id})">Acknowledge</button><br>` :
+                `<button class="btn btn-primary btn-small" onclick="engineerDashboard.showUpdateTicketModal(${ticket.id})">Update</button><br>`}
+                    <button class="btn btn-secondary btn-small" onclick="engineerDashboard.viewComments(${ticket.id})">Comments</button><br>
+                    <button class="btn btn-success btn-small" onclick="engineerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button><br>
+                    <button class="btn btn-info btn-small" onclick="engineerDashboard.showAddAttachmentModal(${ticket.id})">Add Attachment</button><br>
+                    <button class="btn btn-danger btn-small" onclick="engineerDashboard.deleteTicket(${ticket.id})">Delete</button>
                 </td>
             </tr>
         `;
@@ -214,6 +364,58 @@ class EngineerDashboard {
         html += '</tbody></table></div>';
         ticketsList.innerHTML = html;
     }
+
+// 🔥 ADD: Sorting functionality for engineers
+    sortTickets(sortBy) {
+        // Get current tickets from the table
+        const table = document.querySelector('.table tbody');
+        if (!table) return;
+
+        const rows = Array.from(table.rows);
+
+        // Toggle sort direction
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+
+        rows.sort((a, b) => {
+            let aValue, bValue;
+
+            switch (sortBy) {
+                case 'id':
+                    aValue = parseInt(a.cells[0].textContent.replace('#', ''));
+                    bValue = parseInt(b.cells[0].textContent.replace('#', ''));
+                    break;
+                case 'title':
+                    aValue = a.cells[1].textContent.toLowerCase();
+                    bValue = b.cells[1].textContent.toLowerCase();
+                    break;
+                case 'customer':
+                    aValue = a.cells[2].textContent.toLowerCase();
+                    bValue = b.cells[2].textContent.toLowerCase();
+                    break;
+                case 'status':
+                    aValue = a.cells[4].textContent.toLowerCase();
+                    bValue = b.cells[4].textContent.toLowerCase();
+                    break;
+                case 'createdAt':
+                    aValue = new Date(a.cells[7].textContent);
+                    bValue = new Date(b.cells[7].textContent);
+                    break;
+                default:
+                    return 0;
+            }
+
+            if (this.sortDirection === 'asc') {
+                return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+            } else {
+                return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+            }
+        });
+
+        // Clear table and re-append sorted rows
+        table.innerHTML = '';
+        rows.forEach(row => table.appendChild(row));
+    }
+
 
     displayAssignedTickets(tickets) {
         const assignedTicketsList = document.getElementById('assignedTicketsList');
@@ -263,13 +465,102 @@ class EngineerDashboard {
         assignedTicketsList.innerHTML = html;
     }
 
+    // 🔥 ADD: Missing attachment viewing methods
     async viewAttachments(ticketId) {
         try {
-            const response = await this.apiCall(`/api/engineer/tickets/${ticketId}/attachments`);
-            const attachments = await response.json();
+            const attachments = await this.loadTicketAttachments(ticketId);
             this.showAttachmentsModal(ticketId, attachments);
         } catch (error) {
             this.showMessage('Error loading attachments: ' + error.message, 'error');
+        }
+    }
+
+    // 🔥 ADD: Missing showAttachmentsModal method
+    showAttachmentsModal(ticketId, attachments) {
+        let attachmentsHtml = `
+            <div class="modal" id="attachmentsModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Attachments for Ticket #${ticketId}</h3>
+                        <button class="close" onclick="engineerDashboard.closeModal('attachmentsModal')">&times;</button>
+                    </div>
+                    <div class="modal-body">
+        `;
+
+        if (attachments.length === 0) {
+            attachmentsHtml += '<div class="message info">No attachments found for this ticket.</div>';
+        } else {
+            attachmentsHtml += `
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>File Name</th>
+                                <th>Size</th>
+                                <th>Uploaded By</th>
+                                <th>Comment</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            attachments.forEach(attachment => {
+                attachmentsHtml += `
+                    <tr>
+                        <td>${attachment.fileName}</td>
+                        <td>${this.formatFileSize(attachment.fileSize)}</td>
+                        <td>${attachment.uploadedBy.fullName}</td>
+                        <td>${attachment.comment || 'No comment'}</td>
+                        <td>${this.formatDateTime(attachment.uploadedAt)}</td>
+                        <td>
+                            <button class="btn btn-primary btn-small" onclick="engineerDashboard.downloadAttachment(${attachment.id}, '${attachment.fileName}')">Download</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            attachmentsHtml += '</tbody></table></div>';
+        }
+
+        attachmentsHtml += `
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', attachmentsHtml);
+        document.getElementById('attachmentsModal').style.display = 'block';
+    }
+
+    // 🔥 ADD: Missing download attachment method
+    async downloadAttachment(attachmentId, fileName) {
+        try {
+            const response = await fetch(`/api/engineer/attachments/${attachmentId}/download`, {
+                method: 'GET',
+                headers: {
+                    'X-User-ID': this.currentUser.id,
+                    'X-User-Role': this.currentUser.role,
+                    'X-Username': this.currentUser.username
+                }
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } else {
+                throw new Error('Failed to download file');
+            }
+        } catch (error) {
+            this.showMessage('Error downloading file: ' + error.message, 'error');
         }
     }
 
@@ -610,6 +901,7 @@ class EngineerDashboard {
         }
     }
 
+    // 🔥 ADD: Missing utility methods
     truncateText(text, maxLength) {
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     }
@@ -620,6 +912,14 @@ class EngineerDashboard {
 
     formatDateTime(dateString) {
         return new Date(dateString).toLocaleString();
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
 
     logout() {
