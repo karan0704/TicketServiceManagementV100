@@ -1,6 +1,0 @@
-/* login.css */
-/* mostly handled by Tailwind, minimal customizations */
-
-input::placeholder {
-    color: #9ca3af;
-}

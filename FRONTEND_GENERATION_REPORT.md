@@ -4,16 +4,16 @@
 📂 Generated Structure:
 D:\Karan Ticket Project\TicketServiceManagementV100\src\main\resources\static/
 ├── css/
-│   ├── login.css           ✅ Modern login styling
-│   └── dashboard.css       ✅ Complete dashboard styling
+│   ├── login.css             ✅ Modern login styling
+│   └── dashboard.css         ✅ Complete dashboard styling
 ├── js/
-│   ├── login.js           ✅ Login functionality & role routing
+│   ├── login.js              ✅ Login functionality & role routing
 │   ├── customer_dashboard.js ✅ Customer-specific operations
 │   └── engineer_dashboard.js ✅ Engineer-specific operations
-├── index.html             ✅ Main login page
-├── login.html             ✅ Alternative login page
-├── customer_dashboard.html ✅ Customer interface
-└── engineer_dashboard.html ✅ Engineer interface
+├── index.html                ✅ Main login page
+├── login.html                ✅ Alternative login page
+├── customer_dashboard.html   ✅ Customer interface
+└── engineer_dashboard.html   ✅ Engineer interface
 
 🔥 FEATURES IMPLEMENTED:
 
