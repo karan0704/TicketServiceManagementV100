@@ -2,7 +2,7 @@
 class EngineerDashboard {
     constructor() {
         this.currentUser = null;
-        this.sortDirection = 'asc';
+        this.sortDirection = 'asc'; // Initialize sort direction
         this.initializeDashboard();
     }
 
@@ -110,7 +110,11 @@ class EngineerDashboard {
         });
     }
 
-// 🔥 ADD: Missing handleTicketFilter method
+    async loadInitialData() {
+        await this.loadUnassignedTickets();
+    }
+
+    // 🔥 FIXED: handleTicketFilter method
     handleTicketFilter(filterType) {
         switch (filterType) {
             case 'all':
@@ -133,7 +137,7 @@ class EngineerDashboard {
         }
     }
 
-// 🔥 ADD: Load all tickets method
+    // 🔥 ADD: Load all tickets method
     async loadAllTickets() {
         try {
             this.showLoading('ticketsList');
@@ -149,12 +153,12 @@ class EngineerDashboard {
         }
     }
 
-// 🔥 ADD: Load tickets by status
+    // 🔥 ADD: Load tickets by status
     async loadTicketsByStatus(status) {
         try {
             this.showLoading('ticketsList');
 
-            const response = await fetch(`/api/public/tickets`);
+            const response = await fetch('/api/public/tickets');
             const allTickets = await response.json();
 
             // Filter tickets by status
@@ -166,80 +170,6 @@ class EngineerDashboard {
         } finally {
             this.hideLoading('ticketsList');
         }
-    }
-
-// 🔥 ADD: Add attachment functionality for engineers
-    showAddAttachmentModal(ticketId) {
-        const modalHtml = `
-        <div class="modal" id="addAttachmentModal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3 class="modal-title">Add Attachment to Ticket #${ticketId}</h3>
-                    <button class="close" onclick="engineerDashboard.closeModal('addAttachmentModal')">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <form id="addAttachmentForm">
-                        <div class="form-group">
-                            <label>Select File:</label>
-                            <input type="file" class="form-control" id="attachmentFile" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Comment (optional):</label>
-                            <textarea class="form-control" id="attachmentComment" rows="3" placeholder="Optional comment about this file..."></textarea>
-                        </div>
-                        <div style="text-align: right;">
-                            <button type="button" class="btn btn-secondary" onclick="engineerDashboard.closeModal('addAttachmentModal')">Cancel</button>
-                            <button type="button" class="btn btn-primary" onclick="engineerDashboard.uploadAttachment(${ticketId})">Upload</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    `;
-
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-        document.getElementById('addAttachmentModal').style.display = 'block';
-    }
-
-// 🔥 ADD: Upload attachment for engineers
-    async uploadAttachment(ticketId) {
-        const fileInput = document.getElementById('attachmentFile');
-        const comment = document.getElementById('attachmentComment').value.trim();
-
-        if (!fileInput.files[0]) {
-            this.showMessage('Please select a file', 'error');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', fileInput.files[0]);
-        formData.append('comment', comment);
-
-        try {
-            const response = await fetch(`/api/engineer/tickets/${ticketId}/attachments`, {
-                method: 'POST',
-                headers: {
-                    'X-User-ID': this.currentUser.id,
-                    'X-User-Role': this.currentUser.role,
-                    'X-Username': this.currentUser.username
-                },
-                body: formData
-            });
-
-            if (response.ok) {
-                this.showMessage('Attachment uploaded successfully!', 'success');
-                this.closeModal('addAttachmentModal');
-                this.loadUnassignedTickets(); // Refresh current view
-            } else {
-                throw new Error('Failed to upload attachment');
-            }
-        } catch (error) {
-            this.showMessage('Error uploading attachment: ' + error.message, 'error');
-        }
-    }
-
-    async loadInitialData() {
-        await this.loadUnassignedTickets();
     }
 
     // 🔥 ADD: Missing method to load ticket attachments
@@ -301,8 +231,7 @@ class EngineerDashboard {
         }
     }
 
-    // 🔧 FIXED: Corrected method references and added proper actions
-    // 🔧 UPDATED: displayTickets method with attachment button
+    // 🔧 UPDATED: Enhanced displayTickets with sorting and attachment functionality
     async displayTickets(tickets, title, showAcknowledgeButton = false) {
         const ticketsList = document.getElementById('ticketsList');
 
@@ -312,60 +241,60 @@ class EngineerDashboard {
         }
 
         let html = `
-        <h3>${title}</h3>
-        <div class="table-container">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th onclick="engineerDashboard.sortTickets('id')" style="cursor: pointer;">ID ↕</th>
-                        <th onclick="engineerDashboard.sortTickets('title')" style="cursor: pointer;">Title ↕</th>
-                        <th onclick="engineerDashboard.sortTickets('customer')" style="cursor: pointer;">Customer ↕</th>
-                        <th>Description</th>
-                        <th onclick="engineerDashboard.sortTickets('status')" style="cursor: pointer;">Status ↕</th>
-                        <th>Category</th>
-                        <th>Attachments</th>
-                        <th onclick="engineerDashboard.sortTickets('createdAt')" style="cursor: pointer;">Created ↕</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-    `;
+            <h3>${title}</h3>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th onclick="engineerDashboard.sortTickets('id')" style="cursor: pointer;">ID ↕</th>
+                            <th onclick="engineerDashboard.sortTickets('title')" style="cursor: pointer;">Title ↕</th>
+                            <th onclick="engineerDashboard.sortTickets('customer')" style="cursor: pointer;">Customer ↕</th>
+                            <th>Description</th>
+                            <th onclick="engineerDashboard.sortTickets('status')" style="cursor: pointer;">Status ↕</th>
+                            <th>Category</th>
+                            <th>Attachments</th>
+                            <th onclick="engineerDashboard.sortTickets('createdAt')" style="cursor: pointer;">Created ↕</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
 
         // Process each ticket and load its attachments
         for (const ticket of tickets) {
             const attachments = await this.loadTicketAttachments(ticket.id);
 
             html += `
-            <tr>
-                <td>#${ticket.id}</td>
-                <td>${ticket.title}</td>
-                <td>${ticket.customer ? ticket.customer.fullName : 'N/A'}</td>
-                <td>${this.truncateText(ticket.description, 50)}</td>
-                <td><span class="status-badge status-${ticket.status.toLowerCase().replace('_', '-')}">${ticket.status}</span></td>
-                <td>${ticket.category ? ticket.category.name : 'N/A'}</td>
-                <td>
-                    <span class="attachment-count">${attachments.length} file(s)</span>
-                    ${attachments.length > 0 ? `<br><button class="btn btn-small btn-secondary" onclick="engineerDashboard.viewAttachments(${ticket.id})">View Files</button>` : ''}
-                </td>
-                <td>${this.formatDate(ticket.createdAt)}</td>
-                <td>
-                    ${showAcknowledgeButton ?
+                <tr>
+                    <td>#${ticket.id}</td>
+                    <td>${ticket.title}</td>
+                    <td>${ticket.customer ? ticket.customer.fullName : 'N/A'}</td>
+                    <td>${this.truncateText(ticket.description, 50)}</td>
+                    <td><span class="status-badge status-${ticket.status.toLowerCase().replace('_', '-')}">${ticket.status}</span></td>
+                    <td>${ticket.category ? ticket.category.name : 'N/A'}</td>
+                    <td>
+                        <span class="attachment-count">${attachments.length} file(s)</span>
+                        ${attachments.length > 0 ? `<br><button class="btn btn-small btn-secondary" onclick="engineerDashboard.viewAttachments(${ticket.id})">View Files</button>` : ''}
+                    </td>
+                    <td>${this.formatDate(ticket.createdAt)}</td>
+                    <td>
+                        ${showAcknowledgeButton ?
                 `<button class="btn btn-success btn-small" onclick="engineerDashboard.acknowledgeTicket(${ticket.id})">Acknowledge</button><br>` :
                 `<button class="btn btn-primary btn-small" onclick="engineerDashboard.showUpdateTicketModal(${ticket.id})">Update</button><br>`}
-                    <button class="btn btn-secondary btn-small" onclick="engineerDashboard.viewComments(${ticket.id})">Comments</button><br>
-                    <button class="btn btn-success btn-small" onclick="engineerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button><br>
-                    <button class="btn btn-info btn-small" onclick="engineerDashboard.showAddAttachmentModal(${ticket.id})">Add Attachment</button><br>
-                    <button class="btn btn-danger btn-small" onclick="engineerDashboard.deleteTicket(${ticket.id})">Delete</button>
-                </td>
-            </tr>
-        `;
+                        <button class="btn btn-secondary btn-small" onclick="engineerDashboard.viewComments(${ticket.id})">Comments</button><br>
+                        <button class="btn btn-success btn-small" onclick="engineerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button><br>
+                        <button class="btn btn-info btn-small" onclick="engineerDashboard.showAddAttachmentModal(${ticket.id})">Add Attachment</button><br>
+                        <button class="btn btn-danger btn-small" onclick="engineerDashboard.deleteTicket(${ticket.id})">Delete</button>
+                    </td>
+                </tr>
+            `;
         }
 
         html += '</tbody></table></div>';
         ticketsList.innerHTML = html;
     }
 
-// 🔥 ADD: Sorting functionality for engineers
+    // 🔥 ADD: Sorting functionality for engineers
     sortTickets(sortBy) {
         // Get current tickets from the table
         const table = document.querySelector('.table tbody');
@@ -416,7 +345,6 @@ class EngineerDashboard {
         rows.forEach(row => table.appendChild(row));
     }
 
-
     displayAssignedTickets(tickets) {
         const assignedTicketsList = document.getElementById('assignedTicketsList');
 
@@ -456,6 +384,7 @@ class EngineerDashboard {
                         <button class="btn btn-primary btn-small" onclick="engineerDashboard.showUpdateTicketModal(${ticket.id})">Update</button>
                         <button class="btn btn-secondary btn-small" onclick="engineerDashboard.viewComments(${ticket.id})">Comments</button>
                         <button class="btn btn-success btn-small" onclick="engineerDashboard.showAddCommentModal(${ticket.id})">Add Comment</button>
+                        <button class="btn btn-info btn-small" onclick="engineerDashboard.showAddAttachmentModal(${ticket.id})">Add Attachment</button>
                     </td>
                 </tr>
             `;
@@ -465,7 +394,7 @@ class EngineerDashboard {
         assignedTicketsList.innerHTML = html;
     }
 
-    // 🔥 ADD: Missing attachment viewing methods
+    // 🔥 ADD: attachment viewing methods
     async viewAttachments(ticketId) {
         try {
             const attachments = await this.loadTicketAttachments(ticketId);
@@ -475,7 +404,7 @@ class EngineerDashboard {
         }
     }
 
-    // 🔥 ADD: Missing showAttachmentsModal method
+    // 🔥 ADD: showAttachmentsModal method
     showAttachmentsModal(ticketId, attachments) {
         let attachmentsHtml = `
             <div class="modal" id="attachmentsModal">
@@ -534,7 +463,77 @@ class EngineerDashboard {
         document.getElementById('attachmentsModal').style.display = 'block';
     }
 
-    // 🔥 ADD: Missing download attachment method
+    // 🔥 ADD: Engineer attachment upload functionality
+    showAddAttachmentModal(ticketId) {
+        const modalHtml = `
+            <div class="modal" id="addAttachmentModal">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 class="modal-title">Add Attachment to Ticket #${ticketId}</h3>
+                        <button class="close" onclick="engineerDashboard.closeModal('addAttachmentModal')">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="addAttachmentForm">
+                            <div class="form-group">
+                                <label>Select File:</label>
+                                <input type="file" class="form-control" id="attachmentFile" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Engineer Comment (optional):</label>
+                                <textarea class="form-control" id="attachmentComment" rows="3" placeholder="Optional comment about this file..."></textarea>
+                            </div>
+                            <div style="text-align: right;">
+                                <button type="button" class="btn btn-secondary" onclick="engineerDashboard.closeModal('addAttachmentModal')">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="engineerDashboard.uploadAttachment(${ticketId})">Upload</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        document.getElementById('addAttachmentModal').style.display = 'block';
+    }
+
+    // 🔥 ADD: Upload attachment for engineers
+    async uploadAttachment(ticketId) {
+        const fileInput = document.getElementById('attachmentFile');
+        const comment = document.getElementById('attachmentComment').value.trim();
+
+        if (!fileInput.files[0]) {
+            this.showMessage('Please select a file', 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('comment', comment);
+
+        try {
+            const response = await fetch(`/api/engineer/tickets/${ticketId}/attachments`, {
+                method: 'POST',
+                headers: {
+                    'X-User-ID': this.currentUser.id,
+                    'X-User-Role': this.currentUser.role,
+                    'X-Username': this.currentUser.username
+                },
+                body: formData
+            });
+
+            if (response.ok) {
+                this.showMessage('Attachment uploaded successfully!', 'success');
+                this.closeModal('addAttachmentModal');
+                this.loadUnassignedTickets(); // Refresh current view
+            } else {
+                throw new Error('Failed to upload attachment');
+            }
+        } catch (error) {
+            this.showMessage('Error uploading attachment: ' + error.message, 'error');
+        }
+    }
+
+    // 🔥 ADD: download attachment method
     async downloadAttachment(attachmentId, fileName) {
         try {
             const response = await fetch(`/api/engineer/attachments/${attachmentId}/download`, {

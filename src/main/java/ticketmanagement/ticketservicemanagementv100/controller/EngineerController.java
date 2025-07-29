@@ -184,6 +184,34 @@ public class EngineerController {
         }
     }
 
+    @GetMapping("/attachments/{attachmentId}/download")
+    public ResponseEntity<byte[]> downloadAttachment(
+            @PathVariable Long attachmentId,
+            @RequestHeader("X-User-ID") Long userId,
+            @RequestHeader("X-User-Role") String role,
+            @RequestHeader("X-Username") String username) {
+
+        SecurityUtil.validateRole(role, "ENGINEER");
+        SecurityUtil.validateAndGetUser(userId, role, username);
+
+        try {
+            Attachment attachment = attachmentService.findById(attachmentId);
+            if (attachment == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            byte[] fileContent = attachmentService.downloadAttachment(attachmentId);
+
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "attachment; filename=\"" + attachment.getFileName() + "\"")
+                    .header("Content-Type", attachment.getFileType())
+                    .body(fileContent);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+
     @GetMapping("/tickets/{ticketId}/attachments")
     public ResponseEntity<List<Attachment>> getTicketAttachments(
             @PathVariable Long ticketId,
